@@ -40,17 +40,17 @@ $ source ~/.local/nvf/bin/activate
 (nvf) $ uv pip install nvflare
 ```
 
-if you plan to work with your NVFlare project for a while you should consider automatically activating when you login, e.g. 
+if you plan to work with your NVFlare project for a while you should consider activating it automatically each time you login, e.g. 
 
 ```
-echo 'source ~/.local/nvf/bin/activate' >> ~/.profile  # or ~/.bash_profile
+echo 'source ~/.local/nvf/bin/activate' >> ~/.profile  # or ~/.bash_profile for older Linux
 ```
 
 ## Installing Dashboard
 
 The NVFlare dashboard will be created in an isolated AWS account. Please see these instructions to [create the dashboard in AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#create-dashboard-on-aws)
 
-If you receive a VPC error such as (`VPCIdNotSpecified`) it means that no default network configuration ([Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html)) has been created by your AWS administrator. Default VPCs are often used in smaller test envionments. You can create a default VPC by using this command: `aws ec2 create-default-vpc` . If that fails you may not have permission to create this and have to reach out to your AWS Administrator for a solution. 
+If you receive a VPC error such as (`VPCIdNotSpecified`) it means that no default network configuration ([Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html)) has been created by your AWS administrator. Default VPCs are often used in smaller test envionments. You can create a default VPC by using this command: `aws ec2 create-default-vpc` . If that fails you may not have permission to create this and have to reach out to your AWS Administrator for a solution. In NVFlare versions > 2.4 you will also be able to pick your own VPC. 
 
 ### Getting dashboard production ready 
 
@@ -69,6 +69,22 @@ aws ec2 allocate-address --domain vpc  # get YOUR_ALLOCATION_ID
 aws ec2 describe-instances #  get YOUR_INSTANCE_ID
 aws ec2 associate-address --instance-id YOUR_INSTANCE_ID --allocation-id YOUR_ALLOCATION_ID
 ```
+Once your DNS entry is setup and you have received your SSL cert you can setup secure transport. In most cases you will receive a pem certificate file protected by a password. upload that file to the dashboard server and use the openssl command to extract x509 certificate and the key file into the ~/cert folder. Restart the container after that 
 
+```
+scp -i "NVFlareDashboardKeyPair.pem" mycert.pem ubuntu@ec2-xxx-xxx-xxx-xxx.us-west-2.compute.amazonaws.com
+ssh -i "NVFlareDashboardKeyPair.pem" ubuntu@ec2-xxx-xxx-xxx-xxx.us-west-2.compute.amazonaws.com
+openssl rsa -in mycert.pem -out ~/cert/web.key
+openssl x509 -in mycert.pem -out ~/cert/web.crt
+nvflare dashboard --stop 
+nvflare dashboard --start -p 443 -f ~
+```
 
+#### About 2. Start at reboot 
+
+Login to the dashboard instance via ssh (using -i NVFlareDashboardKeyPair.pem) and run this command to add a line to the crontab file: 
+
+```
+(crontab -l 2>/dev/null; echo "@reboot \$HOME/.local/bin/nvflare dashboard --start -p 443 -f \$HOME > /var/tmp/nvflare-docker-start.log 2>&1") | crontab
+```
 
