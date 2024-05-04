@@ -49,7 +49,14 @@ if you plan to work with your NVFlare project for a while you should consider ac
 echo 'source ~/.local/nvf/.venv/bin/activate' >> ~/.profile  # or ~/.bash_profile for older Linux
 ```
 
-## 
+Next we will be connecting with an NVFlare Dashboard that someone else put up 
+
+## Connecting to NVFlare dashboard 
+
+For the purpose of this example we assume that your collaborators have setup a central NVFlare server in AWS that will manage the project. We assume this server will be at `flareboard.mydomain.edu` (your collaborators will share the actual address with you). Once you have registered as a member and been approved you will be able to login to the dashboard and can download the eonsole 
+
+![image](https://github.com/dirkpetersen/nvflare-cancer/assets/1427719/fd174c42-c0dc-4fe2-9525-8bfb65529a8a)
+
 
 
 ## Installing Dashboard
