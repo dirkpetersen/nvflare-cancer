@@ -31,7 +31,7 @@ Python 3.10.14
 install NVFlare in a new virtual environment and source it
 
 ```
-$ rye init ~/.local/nvf && cd ~/.local/nvf && rye add nvflare && rye sync $$ cd ~
+$ rye init ~/.local/nvf && cd ~/.local/nvf && rye add nvflare && rye sync && cd ~
 
 success: Initialized project in /home/pytester/.local/nvf
   Run `rye sync` to get started
