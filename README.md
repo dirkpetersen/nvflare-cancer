@@ -49,7 +49,14 @@ if you plan to work with your NVFlare project for a while you should consider ac
 echo 'source ~/.local/nvf/.venv/bin/activate' >> ~/.profile  # or ~/.bash_profile for older Linux
 ```
 
-## 
+Next we will be connecting with an NVFlare Dashboard that someone else put up 
+
+## Connecting to NVFlare dashboard 
+
+For the purpose of this example we assume that your collaborators have setup a central NVFlare server in AWS that will manage the project. We assume this server will be at `flareboard.mydomain.edu` (your collaborators will share the actual address with you). Once you have registered as a member and been approved you will be able to login to the dashboard and can download the eonsole 
+
+![image](https://github.com/dirkpetersen/nvflare-cancer/assets/1427719/fd174c42-c0dc-4fe2-9525-8bfb65529a8a)
+
 
 
 ## Installing Dashboard
@@ -167,4 +174,12 @@ Let's encrypt ssl certs have a reputation of high security because they expire a
 ```
 (crontab -l 2>/dev/null; echo "0 0 1 * * \$HOME/.local/bin/certbot renew --config-dir \$HOME/cert --work-dir \$HOME/cert --logs-dir \$HOME/cert >> /var/tmp/certbot-renew.log 2>&1") | crontab
 ```
+
+## Installing Server
+
+The server is a central system that is installed alongside the dashboard by the project administrator. The users from the federated sites will connect first to the dashbard to download a configuration and then install a client to build a connection to the server to exhange ML models and meta information but not share their data.
+
+As a project admin login to the dashboard and download the server startup kit
+
+![image](https://github.com/dirkpetersen/nvflare-cancer/assets/1427719/523aa5a0-7c28-4713-b629-352caa90ea4c)
 
