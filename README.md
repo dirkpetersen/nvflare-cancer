@@ -10,8 +10,15 @@ The central NVFlare dashboard and server(s) will be installed by the `Project Ad
 
 # Installing NVFlare deploy environment 
 
-First we install NVFlare on a computer from which you will connect to the infrastructure and/or roll it out in the frist place. This can be a laptop or management server. If you want to roll out to AWS, you should have the AWS CLI installed and AWS credentials setup. You must be allowed to launch EC2 instances. 
-For consistency reasons we recommend installing the lastest NVFlare supported Python version (NVFlare 2.40 and Python 3.10 as of May 2024). For our AWS deployment we will use Ubuntu 22.04 (which comes with Python 3.10) instead of the default Ubuntu 20.04 (which comes with Python 3.8). To quickly install Python 3.10 in our work environment (Linux, Mac or Windows with WSL Linux) we propose the Rye Package manager by Armin Ronacher (the maker of Flask). Below are the instructions for Linux (incl. WSL) and Mac. Do not use the Windows instructions [here](https://rye-up.com/) as they are not tested. 
+First we install NVFlare on a computer from which you will connect to the infrastructure and/or roll it out in the frist place. This can be a laptop or management server.
+
+## Prerequisites
+
+If you want to roll out parts of the infrastruncture to AWS or Azure, you should have the AWS or Azure CLI installed and AWS or Azure credentials setup. You must be allowed to launch AWS EC2 instances or Azure virtual machines including network configuration.
+
+## Installing the right version of Python
+
+For consistency reasons we recommend installing the lastest NVFlare supported Python version (NVFlare 2.40 and Python 3.10 as of May 2024). For our AWS deployment we will use Ubuntu 22.04 (which comes with Python 3.10) instead of the default Ubuntu 20.04 (which comes with Python 3.8). To quickly install Python 3.10 in your work environment (Linux, Mac or Windows with WSL Linux) we propose the Rye Package manager by Armin Ronacher (the maker of Flask) as it very fast and can be easily removed. Below are the instructions for Linux (incl. WSL) and Mac. Do not use the Windows instructions [here](https://rye-up.com/) as they are not tested. 
 Rye quickly installs Python 3.10 in a reproducible way and makes it the default Python on your system (it will edit file ~/.python-version)
 
 ```bash
@@ -29,6 +36,8 @@ A quick test should show that the default python is latest Python 3.10
 $ python --version
 Python 3.10.14
 ```
+
+## Installing NVFlare in an isolated venv
 
 install NVFlare in a new virtual environment at `~/.local/nvf` and source it
 
@@ -55,24 +64,29 @@ Next we will be connecting to an NVFlare Dashboard that someone else set up
 
 # Connecting to an existing NVFlare Project
 
-`Members` are researchers that are using NVFlare clients that have been configured and assigned to them by the `Org Admin` at their Institution. The clients are connecting to an NVFlare Server managed by another Institution or by the central IT organization at their Institution in conjunction with a central dashboard. This is the central hub of an NVFlare Project.
+In NVFlare, before deploying a new project, you'll likely connect to an existing project that a collaborating institution's `Project Admin` has installed. Your institution will need users with different roles:
 
-## Using NVFlare as a Member
+`Lead`: The most common role, typically held by researchers. They submit jobs to the NVFlare system, which then executes the jobs on NVFlare clients (physical or virtual servers) set up by an `Org Admin`.
+`Org Admin`: Can be a researcher with an AWS or Azure cloud account, or someone who can log in as a non-root user to a server with GPUs. They are responsible for installing and managing NVFlare clients. This role can also be held by cloud or research computing administrators. `Org Admins` are not allowed to submit jobs.
+`Member`: Has read-only access to the project by default.
 
-Members will sign up and (after approval) login to the NVFlare dashboard to download authentication and configuration information. We assume the dashboard will be at `https://flareboard.mydomain.edu` (your collaborators will share the actual address/URL with you). Once you have registered as a member and been approved you will be able to login to the dashboard and can download the console 
+To ensure proper separation of duties, your institution will need at least two accounts: one with the `Org Admin` role for managing infrastructure, and another with the `Lead` role for submitting jobs.
+
+## Using NVFlare as a Lead
+
+`Leads` will sign up and (after approval by the Project Admin) login to the NVFlare dashboard to download authentication and configuration information. We assume the dashboard will be at `https://flareboard.mydomain.edu` (your collaborators will share the actual address/URL with you). Once you have registered as a `Lead` and been approved you will be able to login to the dashboard and can download the console. 
 
 ![image](https://github.com/dirkpetersen/nvflare-cancer/assets/1427719/fd174c42-c0dc-4fe2-9525-8bfb65529a8a)
 
-To check the server status, login as `Member` at `https://flareboard.mydomain.edu` and click "Download FLARE Console" under DOWNLOADS and keep the password. Then unzip the console and enter the password
+To get credentials to the NVFlare system login as `Lead` at `https://flareboard.mydomain.edu` and click "Download FLARE Console" under DOWNLOADS and keep the password. The console is downloaded as a zip file called `your@email.adr.zip`. Then unzip the console to a folder in your home directory for this specific NVFlare project and enter the password
 
 ```bash
-unzip mymember\@domain.edu.zip
-cd mymember\@domain.edu
+unzip -d ~/.nvflare/myproject ./my-lead\@domain.edu.zip
 ```
-then run startup/fl_admin.sh, enter the email address of the user and run `check_status server` 
+then run `~/.nvflare/myproject/my-lead\@domain.edu/startup/fl_admin.sh`, enter the email address `my-lead\@domain.edu` when prompted and run the command `check_status server` 
 
 ```
-startup/fl_admin.sh
+~/.nvflare/myproject/my-lead\@domain.edu/startup/fl_admin.sh
 
 > check_status server
 Engine status: stopped
@@ -90,7 +104,40 @@ Done [1087332 usecs] 2024-05-05 23:28:25.033931
 
 ```
 
-You are now connected to an NVFlare system.
+You are now connected to an NVFlare system. As a next step let's run a test job using python. We will clone the NVFlare repos into a shared project folder to use some of the standard examples
+
+```
+cd /shared/myproject
+git clone https://github.com/NVIDIA/NVFlare
+```
+
+and then create this python example 
+
+```python
+#! /usr/bin/env python3
+
+import os
+import nvflare.fuel.flare_api.flare_api as nvf
+
+flprj = "myproject"
+username = "my-lead@domain.edu" 
+
+authloc = os.path.join(os.path.expanduser("~"),
+                ".nvflare", flprj, username)
+
+sess = nvf.new_secure_session(
+    username=username,
+    startup_kit_location=authloc
+)
+
+print(sess.get_system_info())
+
+# You must use an absolute path here:
+job_id = sess.submit_job('/shared/myproject/NVFlare/examples/hello-world/hello-numpy-sag/jobs/hello-numpy-sag')
+print(f"{job_id} was submitted")
+
+sess.monitor_job(job_id, cb=nvf.basic_cb_with_print, cb_run_counter={"count":0})
+```
 
 
 ## Using NVFlare as an Org Admin
