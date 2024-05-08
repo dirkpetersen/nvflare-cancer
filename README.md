@@ -18,7 +18,7 @@ If you want to roll out parts of the infrastruncture to AWS or Azure, you should
 
 ## Installing the right version of Python
 
-For consistency reasons we recommend installing the lastest NVFlare supported Python version (NVFlare 2.40 and Python 3.10 as of May 2024). For our AWS deployment we will use Ubuntu 22.04 (which comes with Python 3.10) instead of the default Ubuntu 20.04 (which comes with Python 3.8). To quickly install Python 3.10 in your work environment (Linux, Mac or Windows with WSL Linux) we propose the Rye Package manager by Armin Ronacher (the maker of Flask) as it very fast and can be easily removed. Below are the instructions for Linux (incl. WSL) and Mac. Do not use the Windows instructions [here](https://rye-up.com/) as they are not tested. 
+For consistency reasons we recommend installing the latest NVFlare supported Python version (NVFlare 2.40 and Python 3.10 as of May 2024). For our AWS deployment we will use Ubuntu 22.04 (which comes with Python 3.10) instead of the default Ubuntu 20.04 (which comes with Python 3.8). To quickly install Python 3.10 in your work environment (Linux, Mac or Windows with WSL Linux) we propose the Rye Package manager by Armin Ronacher (the maker of Flask) as it very fast and can be easily removed. Below are the instructions for Linux (incl. WSL) and Mac. Do not use the Windows instructions [here](https://rye-up.com/) as they are not tested. 
 Rye quickly installs Python 3.10 in a reproducible way and makes it the default Python on your system (it will edit file ~/.python-version)
 
 ```bash
@@ -30,7 +30,7 @@ rye pin 3.10
 
 The Rye installer will put `. ~/.rye/env` into ~/.profile to ensure that this Python version is ready at the next login. If you have an older HPC system it may not use the file ~/.profile but ~/.bash_profile instead. just run `echo '. ~/.rye/env' >> ~/.bash_profile` in that case. 
 
-A quick test should show that the default python is latest Python 3.10
+A quick test should show, that the default python is latest Python 3.10
 
 ```bash
 $ python --version
