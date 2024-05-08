@@ -66,9 +66,9 @@ Next we will be connecting to an NVFlare Dashboard that someone else set up
 
 In NVFlare, before deploying a new project, you'll likely connect to an existing project that a collaborating institution's `Project Admin` has installed. Your institution will need users with different roles:
 
-`Lead`: The most common role, typically held by researchers. They submit jobs to the NVFlare system, which then executes the jobs on NVFlare clients (physical or virtual servers) set up by an `Org Admin`.
-`Org Admin`: Can be a researcher with an AWS or Azure cloud account, or someone who can log in as a non-root user to a server with GPUs. They are responsible for installing and managing NVFlare clients. This role can also be held by cloud or research computing administrators. `Org Admins` are not allowed to submit jobs.
-`Member`: Has read-only access to the project by default.
+- `Lead`: The most common role, typically held by researchers. They submit jobs to the NVFlare system, which then executes the jobs on NVFlare clients (physical or virtual servers) set up by an `Org Admin`.
+- `Org Admin`: Can be a researcher with an AWS or Azure cloud account, or someone who can log in as a non-root user to a server with GPUs. They are responsible for installing and managing NVFlare clients. This role can also be held by cloud or research computing administrators. `Org Admins` are not allowed to submit jobs.
+- `Member`: Has read-only access to the project by default.
 
 To ensure proper separation of duties, your institution will need at least two accounts: one with the `Org Admin` role for managing infrastructure, and another with the `Lead` role for submitting jobs.
 
