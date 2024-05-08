@@ -81,9 +81,10 @@ To ensure proper separation of duties, your institution will need at least two a
 To get credentials to the NVFlare system login as `Lead` at `https://flareboard.mydomain.edu` and click "Download FLARE Console" under DOWNLOADS and keep the password. The console is downloaded as a zip file called `your@email.adr.zip`. Then unzip the console to a folder in your home directory for this specific NVFlare project and enter the password
 
 ```bash
+mkdir -p ~/.nvflare/myproject 
 unzip -d ~/.nvflare/myproject ./my-lead\@domain.edu.zip
 ```
-then run `~/.nvflare/myproject/my-lead\@domain.edu/startup/fl_admin.sh`, enter the email address `my-lead\@domain.edu` when prompted and run the command `check_status server` 
+then run `~/.nvflare/myproject/my-lead@domain.edu/startup/fl_admin.sh`, enter the email address `my-lead@domain.edu` when prompted and run the command `check_status server` 
 
 ```
 ~/.nvflare/myproject/my-lead\@domain.edu/startup/fl_admin.sh
