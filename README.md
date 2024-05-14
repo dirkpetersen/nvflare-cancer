@@ -1,12 +1,12 @@
 # NVFlare in Cancer Research 
 
-We are setting up a project to explore federated learning using NVFlare. We assume that the participants will have one of these options available: 
+We are setting up a project among multiple cancer research organizations to explore federated learning using NVFlare. We assume that the participants will have one of these options available: 
 
 - A AWS or Azure cloud account
 - An on-premises Slurm HPC system with GPU 
 - A Windows laptop with a GPU and WSL Linux installed 
 
-The central NVFlare dashboard and server(s) will be installed by the `Project Administrator` who is member of the IT department of one of the participating institutions. The researchers in this institution and other institutions will use an NVFlare compute client on their HPC system, their laptop or a separate cloud account and will have no access to the central system. Please review the [terminologies and roles](https://nvflare.readthedocs.io/en/main/user_guide/security/terminologies_and_roles.html) required for a funtioning NVFlare federation.
+The central NVFlare dashboard and server(s) will be installed by the `Project Admin` who might be in the IT department of the organization that is responsible for installing the central infrastructure in a hub-and-spoke model. The researchers in this institution and other institutions will use an NVFlare compute client on their HPC system, their laptop or a separate cloud account and will have no access to the central hub while the manager of the central hub will have no access to the data processd by the clients. Please review the [terminologies and roles](https://nvflare.readthedocs.io/en/main/user_guide/security/terminologies_and_roles.html) required for a funtioning NVFlare federation.
 
 # Installing NVFlare deploy environment 
 
@@ -18,7 +18,7 @@ If you want to roll out parts of the infrastruncture to AWS or Azure, you should
 
 ## Installing the right version of Python
 
-For consistency reasons we recommend installing the latest NVFlare supported Python version (NVFlare 2.40 and Python 3.10 as of May 2024). For our AWS deployment we will use Ubuntu 22.04 (which comes with Python 3.10) instead of the default Ubuntu 20.04 (which comes with Python 3.8). To quickly install Python 3.10 in your work environment (Linux, Mac or Windows with WSL Linux) we propose the Rye Package manager by Armin Ronacher (the maker of Flask) as it very fast and can be easily removed. Below are the instructions for Linux (incl. WSL) and Mac. Do not use the Windows instructions [here](https://rye-up.com/) as they are not tested. 
+For consistency reasons we recommend installing the latest Python version supported by NVFlare (NVFlare 2.40 and Python 3.10 as of May 2024). For our AWS deployment we will use Ubuntu 22.04 (AWS image ami-03c983f9003cb9cd1, which comes with Python 3.10) instead of the default Ubuntu 20.04 (which comes with Python 3.8). To quickly install Python 3.10 in your work environment (Linux, Mac or Windows with WSL Linux) we propose the Rye Package manager by Armin Ronacher (the maker of Flask) as it very fast and can be easily removed. Below are the instructions for Linux (incl. WSL) and Mac. Do not use the Windows instructions [here](https://rye-up.com/) as they are not tested. 
 Rye quickly installs Python 3.10 in a reproducible way and makes it the default Python on your system (it will edit file ~/.python-version)
 
 ```bash
@@ -112,7 +112,7 @@ cd /shared/myproject
 git clone https://github.com/NVIDIA/NVFlare
 ```
 
-and then create this python example 
+and then copy this python example to file fl-test.py: 
 
 ```python
 #! /usr/bin/env python3
@@ -122,6 +122,7 @@ import nvflare.fuel.flare_api.flare_api as nvf
 
 flprj = "myproject"
 username = "my-lead@domain.edu" 
+myjob = "/shared/myproject/NVFlare/examples/hello-world/hello-numpy-sag/jobs/hello-numpy-sag"
 
 authloc = os.path.join(os.path.expanduser("~"),
                 ".nvflare", flprj, username)
@@ -134,26 +135,43 @@ sess = nvf.new_secure_session(
 print(sess.get_system_info())
 
 # You must use an absolute path here:
-job_id = sess.submit_job('/shared/myproject/NVFlare/examples/hello-world/hello-numpy-sag/jobs/hello-numpy-sag')
+job_id = sess.submit_job(myjob)
 print(f"{job_id} was submitted")
 
 sess.monitor_job(job_id, cb=nvf.basic_cb_with_print, cb_run_counter={"count":0})
 ```
 
+Once you run the Python script you should see something like this:
+
+```
+$ python3 ./fl-test.py
+
+SystemInfo
+server_info:
+status: stopped, start_time: Sun May  5 23:25:37 2024
+client_info:
+AWS-T4(last_connect_time: Wed May  8 17:14:01 2024)
+job_info:
+
+e8d1e2c9-b47f-43fb-b95a-03551c07b93f was submitted
+
+{'name': 'hello-numpy-sag', 'resource_spec': {}, 'min_clients': 2, 'deploy_map': {'app': ['@ALL']}, 'submitter_name': 'my-lead@domain.edu', 'submitter_org': "FL site", 'submitter_role': 'lead', 'job_folder_name': 'hello-numpy-sag', 'job_id': 'e8d1e2c9-b47f-43fb-b95a-03551c07b93f', 'submit_time': 1715213649.985026, 'submit_time_iso': '2024-05-09T00:14:09.985026+00:00', 'start_time': '', 'duration': 'N/A', 'status': 'SUBMITTED'}
+```
+
 
 ## Using NVFlare as an Org Admin
 
-### Register a client site 
+### Register a client site and clients 
 
-If you are the Org Admin of a collaborating organization you join by signing up at `https://flareboard.mydomain.edu` with your email addressm Name and password. In a second step you are asked to enter your Organization name. Pick `Org Admin` as your role before you add one or more client sites with number of GPUs and memory per GPU. Give them self-explanatory client site names, for example if your site is a single Windows Laptop with an RTX-3080 GPU you may call it WSL-RTX3080. 
-For AWS, lets register a client site with a single T4 GPU with 16GB memory, e.g. AWS-T4 (as of May 2024 the lowest cost instance type with a T4 is g4dn.xlarge, also there is a bug in NVFlare and you can only enter 15GB instead of 16GB memory.) 
+If you are the `Org Admin` of a collaborating organization, you join by signing up at `https://flareboard.mydomain.edu` with your email address, Name and password. In a second step you are asked to enter your Organization name. Pick `Org Admin` as your role before you add one or more client sites with number of GPUs and memory per GPU. Here you describe the computers with GPUs that you can access to install NVFlare clients. Give them self-explanatory client site names, for example if your site is a single Windows Laptop with an RTX-3080 GPU you may call it WSL-RTX3080. 
+For AWS, lets register a client site with a single T4 GPU with 16GB memory, e.g. AWS-T4 (as of May 2024, the lowest cost instance type with a T4 is g4dn.xlarge, also there is a bug in NVFlare and you can only enter 15GB instead of 16GB memory.) 
 
 
 ### Install a client 
 
 Login as `Org Admin` at `https://flareboard.mydomain.edu` and under DOWNLOADS -> Client Sites -> AWS-T4 click "Download Startup Kit" and keep the password.
 
-move the file to the location where you launched the console install earlier, unzip the server startup kit and enter the password
+Move the file to the location where you launched the console install earlier, unzip the server startup kit and enter the password
 
 ```bash
 unzip AWS-T4.zip 
@@ -166,7 +184,7 @@ follow [these instructions to install the client on AWS](https://nvflare.readthe
 startup/start.sh --cloud aws     # this is only needed for full automation: --config my_config.txt
 ```
 
-then we are prompted, and instead the default AMI (Ubuntu 20.04) we pick the slightly newer 22.04 (ami-03c983f9003cb9cd1) and we also pick an instance with a T4 GPU, for example g4dn.xlarge
+then you get 3 questions asked, and instead of the default AMI (Ubuntu 20.04) you pick the slightly newer 22.04 (ami-03c983f9003cb9cd1) and you also pick a relatively low cost AWS instance with a T4 GPU, for example g4dn.xlarge. If you are running just a first test, it is fine to install the default and low cost t2.small instance.
 
 
 ```
