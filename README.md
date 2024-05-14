@@ -1,16 +1,16 @@
 # NVFlare in Cancer Research 
 
-We are setting up a project among multiple cancer research organizations to explore federated learning using NVFlare. We assume that the participants will have one of these options available: 
+We are setting up a project among multiple cancer research organizations to explore federated learning using NVFlare. This is a pilot co-led by OHSU Knight Cancer Institute and NCI. We assume that the participants will have one of these options available:
 
-- A AWS or Azure cloud account
-- An on-premises Slurm HPC system with GPU 
-- A Windows laptop with a GPU and WSL Linux installed 
+- An AWS or Azure cloud account 
+- An on-premises Slurm HPC system with GPU (coming soon !)
+- A Windows laptop with a GPU and WSL Linux installed (coming soon !)
 
-The central NVFlare dashboard and server(s) will be installed by the `Project Admin` who might be in the IT department of the organization that is responsible for installing the central infrastructure in a hub-and-spoke model. The researchers in this institution and other institutions will use an NVFlare compute client on their HPC system, their laptop or a separate cloud account and will have no access to the central hub while the manager of the central hub will have no access to the data processd by the clients. Please review the [terminologies and roles](https://nvflare.readthedocs.io/en/main/user_guide/security/terminologies_and_roles.html) required for a funtioning NVFlare federation.
+The central NVFlare dashboard and server was installed by the `Project Admin`, this role can be filled by the IT department of the organization that is responsible for installing the central infrastructure in a hub-and-spoke model. The researchers in this institution and other institutions will use an NVFlare compute client on their HPC system, their laptop or a separate cloud account and will have no access to the central hub while the `Project Admin` of the central hub will have no access to the data processd by the clients. Please review the [terminologies and roles](https://nvflare.readthedocs.io/en/main/user_guide/security/terminologies_and_roles.html) required for a funtioning NVFlare federation.
 
 # Installing NVFlare deploy environment 
 
-First we install NVFlare on a computer from which you will connect to the infrastructure and/or roll it out in the frist place. This can be a laptop or management server.
+First we install the NVFlare software packages on a computer from which you will connect to the infrastructure and/or roll it out in the first place. This can be a laptop or management server.
 
 ## Prerequisites
 
@@ -74,11 +74,11 @@ To ensure proper separation of duties, your institution will need at least two a
 
 ## Using NVFlare as a Lead
 
-`Leads` will sign up and (after approval by the Project Admin) login to the NVFlare dashboard to download authentication and configuration information. We assume the dashboard will be at `https://flareboard.mydomain.edu` (your collaborators will share the actual address/URL with you). Once you have registered as a `Lead` and been approved you will be able to login to the dashboard and can download the console. 
+`Leads` will sign up and (after approval by the Project Admin) login to the NVFlare dashboard to download authentication and configuration information. We assume the dashboard will be at `https://myproject.mydomain.edu` (your collaborators will share the actual address/URL with you). Once you have registered as a `Lead` and been approved you will be able to login to the dashboard and can download the console. 
 
 ![image](https://github.com/dirkpetersen/nvflare-cancer/assets/1427719/fd174c42-c0dc-4fe2-9525-8bfb65529a8a)
 
-To get credentials to the NVFlare system login as `Lead` at `https://flareboard.mydomain.edu` and click "Download FLARE Console" under DOWNLOADS and keep the password. The console is downloaded as a zip file called `your@email.adr.zip`. Then unzip the console to a folder in your home directory for this specific NVFlare project and enter the password
+To get credentials to the NVFlare system login as `Lead` at `https://myproject.mydomain.edu` and click "Download FLARE Console" under DOWNLOADS and keep the password. The console is downloaded as a zip file called `your@email.adr.zip`. Then unzip the console to a folder in your home directory for this specific NVFlare project and enter the password
 
 ```bash
 mkdir -p ~/.nvflare/myproject 
@@ -163,13 +163,13 @@ e8d1e2c9-b47f-43fb-b95a-03551c07b93f was submitted
 
 ### Register a client site and clients 
 
-If you are the `Org Admin` of a collaborating organization, you join by signing up at `https://flareboard.mydomain.edu` with your email address, Name and password. In a second step you are asked to enter your Organization name. Pick `Org Admin` as your role before you add one or more client sites with number of GPUs and memory per GPU. Here you describe the computers with GPUs that you can access to install NVFlare clients. Give them self-explanatory client site names, for example if your site is a single Windows Laptop with an RTX-3080 GPU you may call it WSL-RTX3080. 
+If you are the `Org Admin` of a collaborating organization, you join by signing up at `https://myproject.mydomain.edu` with your email address, Name and password. In a second step you are asked to enter your Organization name. Pick `Org Admin` as your role before you add one or more client sites with number of GPUs and memory per GPU. Here you describe the computers with GPUs that you can access to install NVFlare clients. Give them self-explanatory client site names, for example if your site is a single Windows Laptop with an RTX-3080 GPU you may call it WSL-RTX3080. 
 For AWS, lets register a client site with a single T4 GPU with 16GB memory, e.g. AWS-T4 (as of May 2024, the lowest cost instance type with a T4 is g4dn.xlarge, also there is a bug in NVFlare and you can only enter 15GB instead of 16GB memory.) 
 
 
 ### Install a client 
 
-Login as `Org Admin` at `https://flareboard.mydomain.edu` and under DOWNLOADS -> Client Sites -> AWS-T4 click "Download Startup Kit" and keep the password.
+Login as `Org Admin` at `https://myproject.mydomain.edu` and under DOWNLOADS -> Client Sites -> AWS-T4 click "Download Startup Kit" and keep the password.
 
 Move the file to the location where you launched the console install earlier, unzip the server startup kit and enter the password
 
@@ -238,7 +238,7 @@ sudo reboot
 
 Finally we want to check if all components are working together. We will use the [fl_admin.sh script](https://nvflare.readthedocs.io/en/main/real_world_fl/operation.html#operating-nvflare) for this. The script is available in each of the different FLARE Console packages. They contains different credentials for each user that downloads this package. 
 
-To check the server status, login as `Project Admin` or `Org Admin` at https://flareboard.mydomain.edu and click "Download FLARE Console" under DOWNLOADS and keep the passsword. 
+To check the server status, login as `Project Admin` or `Org Admin` at https://myproject.mydomain.edu and click "Download FLARE Console" under DOWNLOADS and keep the passsword. 
 
 move the file to the location where you launched the console install earlier, unzip the server startup kit and enter the password
 
@@ -275,7 +275,13 @@ Done [1087332 usecs] 2024-05-05 23:28:25.033931
 Done [61900 usecs] 2024-05-05 23:28:34.333857
 ```
 
-# Deploying a new NVFlare Project in AWS
+Once you have installed a new client as an `Org Admin` your users can connect to the system as `Lead`. Please see `Using NVFlare as a Lead`
+
+
+
+# (Not needed for this Project): Deploying a new NVFlare 
+
+The documentation below is not required for the current project that is exploring NVFlare in cancer research, however it can be useful if you would like to install your own production level NVFlare system
 
 ## Installing Dashboard
 
@@ -325,18 +331,18 @@ aws ec2 describe-instances #  get YOUR_INSTANCE_ID
 aws ec2 associate-address --instance-id YOUR_INSTANCE_ID --allocation-id YOUR_ALLOCATION_ID
 ```
 
-Then there are 2 options: In most cases you will obtain a DNS name and certificate from your IT department. For this example we assume your domain name for the dashboard `flareboard.mydomain.edu` and the server is `flareserver.mydomain.edu`. In some cases someone else may have configured the AWS DNS Service (Route 53) that allows you to manage your own DNS. If you manage your own DNS you can also easily use SSL certs from [Let's Encrypt](https://letsencrypt.org/). Let's work through both options: 
+Then there are 2 options: In most cases you will obtain a DNS name and certificate from your IT department. For this example we assume your domain name for the dashboard `myproject.mydomain.edu` and the server is `myproject-server.mydomain.edu`. In some cases someone else may have configured the AWS DNS Service (Route 53) that allows you to manage your own DNS. If you manage your own DNS you can also easily use SSL certs from [Let's Encrypt](https://letsencrypt.org/). Let's work through both options: 
 
 ##### DNS and SSL Certificate through your IT department 
 
-Once your DNS entries are setup and you have received your SSL cert for `flareboard.mydomain.edu` from IT you can setup secure transport. In most cases you will receive a pem certificate file protected by a password. Upload that file to flareboard.mydomain.edu and 
+Once your DNS entries are setup and you have received your SSL cert for `myproject.mydomain.edu` from IT you can setup secure transport. In most cases you will receive a pem certificate file protected by a password. Upload that file to myproject.mydomain.edu and 
 
 ```bash
-(nvf) $ scp -i "NVFlareDashboardKeyPair.pem" mycert.pem ubuntu@flareboard.mydomain.edu
-(nvf) $ ssh -i "NVFlareDashboardKeyPair.pem" ubuntu@flareboard.mydomain.edu
+(nvf) $ scp -i "NVFlareDashboardKeyPair.pem" mycert.pem ubuntu@myproject.mydomain.edu
+(nvf) $ ssh -i "NVFlareDashboardKeyPair.pem" ubuntu@myproject.mydomain.edu
 ```
 
-use the openssl command to extract the x509 certificate and the key file into the ~/cert folder. Restart the container after that. On the flareboard server paste in these commands:
+use the openssl command to extract the x509 certificate and the key file into the ~/cert folder. Restart the container after that. On the myproject.mydomain.edu server paste in these commands:
 
 ```bash
 openssl rsa -in mycert.pem -out ~/cert/web.key
@@ -374,20 +380,20 @@ To register our IP address in the AWS DNS system called Route 53 we need to firs
 aws route53 list-hosted-zones
 ```
 
-and then register a new hostname in this hosted zone using the aws route53 command. Replace flareboard.mydomain.edu with your fully qualified domain name and 123.123.123.123 with the elastic ip address you created earlier. 
+and then register a new hostname in this hosted zone using the aws route53 command. Replace myproject.mydomain.edu with your fully qualified domain name and 123.123.123.123 with the elastic ip address you created earlier. 
 
 ```bash
-JSON53="{\"Comment\":\"DNS update\",\"Changes\":[{\"Action\":\"UPSERT\",\"ResourceRecordSet\":{\"Name\":\"flareboard.mydomain.edu\",\"Type\":\"A\",\"TTL\":300,\"ResourceRecords\":[{\"Value\":\"123.123.123.123\"}]}}]}"
+JSON53="{\"Comment\":\"DNS update\",\"Changes\":[{\"Action\":\"UPSERT\",\"ResourceRecordSet\":{\"Name\":\"myproject.mydomain.edu\",\"Type\":\"A\",\"TTL\":300,\"ResourceRecords\":[{\"Value\":\"123.123.123.123\"}]}}]}"
 aws route53 change-resource-record-sets --hosted-zone-id MYHOSTEDZONEID --change-batch "${JSON53}"
 ```
 
 Then we can use run certbot to connect to letsencrypt.org and create our SSL certificate and copy the files to ~/cert
 
 ```bash
-certbot certonly --dns-route53 --register-unsafely-without-email --agree-tos --config-dir ~/cert --work-dir ~/cert --logs-dir ~/cert -d flareboard.mydomain.edu
-cp ~/cert/live/flareboard.mydomain.edu/fullchain.pem ~/cert/web.crt
-cp ~/cert/live/flareboard.mydomain.edu/privkey.pem ~/cert/web.key
-chmod 600 ~/cert/live/flareboard.mydomain.edu/privkey.pem ~/cert/web.key
+certbot certonly --dns-route53 --register-unsafely-without-email --agree-tos --config-dir ~/cert --work-dir ~/cert --logs-dir ~/cert -d myproject.mydomain.edu
+cp ~/cert/live/myproject.mydomain.edu/fullchain.pem ~/cert/web.crt
+cp ~/cert/live/myproject.mydomain.edu/privkey.pem ~/cert/web.key
+chmod 600 ~/cert/live/myproject.mydomain.edu/privkey.pem ~/cert/web.key
 ```
 
 and restart the dashboard server 
@@ -413,11 +419,11 @@ sudo reboot
 
 ### Configuring Dashboard
 
-Login to the `https://flareboard.mydomain.edu` with the email address and 5 digit initial password of the project administrator and make at least the following changes: 
+Login to the `https://myproject.mydomain.edu` with the email address and 5 digit initial password of the project administrator and make at least the following changes: 
 
 - At MYINFO click "Edit my Profile" and change the password of the project administrator 
 - At PROJECT CONFIGURATION enter short name, title and description and click "Publish" to allow users to sign up 
-- At SERVER CONFIGURATION enter `flareserver.mydomain.edu` at "Server (DNS Name)"
+- At SERVER CONFIGURATION enter `myproject-server.mydomain.edu` at "Server (DNS Name)"
 - At PROJECT HOME click "Freeze Project"
 
 After you have frozen the project you can no longer change any of the settings above, however you can still reset the entire dashboard if needed. 
@@ -443,8 +449,8 @@ As a project admin login to the dashboard and download the server startup kit an
 move the file to the location where you launched the console install earlier, unzip the server startup kit and enter the password
 
 ```bash
-unzip flareserver.mydomain.edu.zip 
-cd flareserver.mydomain.edu 
+unzip myproject-server.mydomain.edu.zip 
+cd myproject-server.mydomain.edu 
 ```
 
 follow [these instructions to install the server on AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#deploy-fl-server-on-aws) or execute this command: 
@@ -460,11 +466,11 @@ Cloud AMI image, press ENTER to accept default ami-04bad3c587fe60d89: ami-03c983
 Cloud EC2 type, press ENTER to accept default t2.small:
 Cloud EC2 region, press ENTER to accept default us-west-2:
 region = us-west-2, ami image = ami-03c983f9003cb9cd1, EC2 type = t2.small, OK? (Y/n) Y
-If the server requires additional dependencies, please copy the requirements.txt to flareserver.mydomain.edu/startup/.
+If the server requires additional dependencies, please copy the requirements.txt to myproject-server.mydomain.edu/startup/.
 Press ENTER when it's done or no additional dependencies.
 ```
 
-After this you should get confirmation that `flareserver.mydomain.edu` was installed. Then find out the INSTANCE_ID of the instance you created and associate it with the second allocation id for the elastic IP you created earlier: 
+After this you should get confirmation that `myproject-server.mydomain.edu` was installed. Then find out the INSTANCE_ID of the instance you created and associate it with the second allocation id for the elastic IP you created earlier: 
 
 ```bash
 aws ec2 describe-instances #  get YOUR_INSTANCE_ID
@@ -474,7 +480,7 @@ aws ec2 associate-address --instance-id YOUR_INSTANCE_ID --allocation-id YOUR_AL
 test your connection with 
 
 ```bash
-ssh -i NVFlareServerKeyPair.pem ubuntu@flareserver.mydomain.edu
+ssh -i NVFlareServerKeyPair.pem ubuntu@myproject-server.mydomain.edu
 ```
 
 add a cronjob to ensure that the server will restart after a reboot
