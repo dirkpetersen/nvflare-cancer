@@ -279,9 +279,15 @@ Done [61900 usecs] 2024-05-05 23:28:34.333857
 
 ## Installing Dashboard
 
-The NVFlare dashboard will be created in an isolated AWS account. Please see these instructions to [create the dashboard in AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#create-dashboard-on-aws). Make sure you record the email address and the 5 digit inital password that is displayed in the terminal 
+The NVFlare dashboard will be created in an isolated AWS account. Please see these instructions to [create the dashboard in AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#create-dashboard-on-aws) or use this command and enter the email address of the `Project Admin` when prompted.
+
+```
+nvflare dashboard --cloud aws
+```
 
 If you receive a VPC error such as (`VPCIdNotSpecified`) it means that no default network configuration ([Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html)) has been created by your AWS administrator. Default VPCs are often used in smaller test envionments. You can create a default VPC by using this command: `aws ec2 create-default-vpc` . If that fails you may not have permission to create this and have to reach out to your AWS Administrator for a solution. In NVFlare versions > 2.4 you will also be able to pick your own VPC. 
+
+After the dashboard is started you will see a dashboard URL that includes an IP address and looks like `http://xxx.xxx.xxx.xxx:443`. Make sure you record the email address and the 5 digit initial password that is displayed in the terminal. Verify that you can login with email address as the user and the password at that URL. You can change your password at `MY INFO -> Edit My Profile`
 
 ### Getting dashboard production ready 
 
@@ -295,7 +301,7 @@ Now the dashboard is installed and you would like to use it more permanently, we
 Login to the dashboard instance via ssh (using -i NVFlareDashboardKeyPair.pem)  
 
 ```bash
-ssh -i "NVFlareDashboardKeyPair.pem" ubuntu@ec2-xxx-xxx-xxx-xxx.us-west-2.compute.amazonaws.com
+ssh -i "NVFlareDashboardKeyPair.pem" ubuntu@52.123.123.123
 ```
 
 and run this command to add a line to the crontab file:
@@ -486,3 +492,5 @@ sudo reboot
 ```
 
 ## Installing Client
+
+please see "Using NVFlare as an Org Admin"
