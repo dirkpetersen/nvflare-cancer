@@ -279,7 +279,7 @@ Once you have installed a new client as an `Org Admin` your users can connect to
 
 
 
-# (Not needed for this Project): Deploying a new NVFlare 
+# (Not needed right now): Deploying a new NVFlare Project
 
 The documentation below is not required for the current project that is exploring NVFlare in cancer research, however it can be useful if you would like to install your own production level NVFlare system
 
@@ -299,8 +299,9 @@ After the dashboard is started you will see a dashboard URL that includes an IP 
 
 Now the dashboard is installed and you would like to use it more permanently, we need to:
 
-1. Set up DNS/HTTPS to ensure that users don't have to connect to an ip-address insecurely.  
 1. Ensure that the dashboard will be automatically started after a reboot 
+1. Ensure that the dashboard is monitored and restarted on error.
+1. Set up DNS/HTTPS to ensure that users don't have to connect to an ip-address insecurely.  
 
 #### About 1. Start at reboot 
 
@@ -313,10 +314,41 @@ ssh -i "NVFlareDashboardKeyPair.pem" ubuntu@52.123.123.123
 and run this command to add a line to the crontab file:
 
 ```bash
-(crontab -l 2>/dev/null; echo "@reboot \$HOME/.local/bin/nvflare dashboard --start -p 443 -f \$HOME > /var/tmp/nvflare-docker-start.log 2>&1") | crontab
+(crontab -l 2>/dev/null; echo "@reboot \$HOME/.local/bin/nvflare dashboard --start -f \$HOME > /var/tmp/nvflare-docker-start.log 2>&1") | crontab
 ```
 
-#### About 2. DNS/HTTPS
+#### About 2. Restart on Error
+
+As in 1. login with NVFlareDashboardKeyPair.pem and create a script ~/monitor.sh as the Ubuntu user
+
+```bash
+#!/bin/bash
+
+url="https://myproject.mydomain.edu"   # Set the website URL
+search_string='name="viewport"'        # Set the search string in the HTML source
+timeout_duration=15                    # Set the timeout duration in seconds
+date=$(date)                           # Get the current date for logging
+
+# Check if the search string exists in the HTML source code
+if curl -k -s -m $timeout_duration $url | grep -q "$search_string"; then
+    echo "${date}: OK ! The search string '$search_string' was found in the HTML source code of $ur
+else
+    echo "${date}: Error ! The search string '$search_string' was not found in the HTML source code of $url or the connection timed out after $timeout_duration seconds"
+    # Run the commands if the search string is not found or the connection times out
+    echo "${date}: Restarting NVFlare dashboard"
+    $HOME/.local/bin/nvflare dashboard --stop
+    sleep 3
+    $HOME/.local/bin/nvflare dashboard --start -f ~
+fi
+```
+
+and add it as an hourly cronjob :
+
+```bash
+(crontab -l 2>/dev/null; echo "59 * * * * \$HOME/monitor.sh >> /var/tmp/nvflare-monitor.log 2>&1") | crontab
+```
+
+#### About 3. DNS/HTTPS
 
 Many IT departments advise their users to only log into websites that do offer secure transport (such as https/ssl). To obtain an SSL certificate we need to configure a DNS domain name that is tied to the certificate, but before we can get a DNS entry we need to create floating permanent IP addresses, (In AWS lingo this is an elastic IP address) that will be tied to the machine that runs the dashboard but can also be assinged to another machine later in case of a migration. We will create 2 floating ip addresses, one for the dashboard and the one for the server. Execute this command twice and note each ip address and allocation id.
 
