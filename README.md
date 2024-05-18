@@ -3,10 +3,44 @@
 We are setting up a project among multiple cancer research organizations to explore federated learning using NVFlare. This is a pilot co-led by OHSU Knight Cancer Institute and NCI. We assume that the participants will have one of these options available:
 
 - An AWS or Azure cloud account 
-- An on-premises Slurm HPC system with GPU (coming soon !)
-- A Windows laptop with a GPU and WSL Linux installed (coming soon !)
+- An on-premises Slurm-based HPC system with GPU nodes
+- A Windows laptop with a GPU and WSL Linux installed 
 
 The central NVFlare dashboard and server was installed by the `Project Admin`, this role can be filled by the IT department of the organization that is responsible for installing the central infrastructure in a hub-and-spoke model. The researchers in this institution and other institutions will use an NVFlare compute client on their HPC system, their laptop or a separate cloud account and will have no access to the central hub while the `Project Admin` of the central hub will have no access to the data processd by the clients. Please review the [terminologies and roles](https://nvflare.readthedocs.io/en/main/user_guide/security/terminologies_and_roles.html) required for a funtioning NVFlare federation.
+
+
+# Table of Contents
+
+- [NVFlare in Cancer Research](#nvflare-in-cancer-research)
+- [Table of Contents](#table-of-contents)
+- [Installing NVFlare deploy environment](#installing-nvflare-deploy-environment)
+  - [Prerequisites](#prerequisites)
+  - [Installing the right version of Python](#installing-the-right-version-of-python)
+  - [Installing NVFlare in an isolated venv](#installing-nvflare-in-an-isolated-venv)
+- [Connecting to an existing NVFlare Project](#connecting-to-an-existing-nvflare-project)
+  - [Using NVFlare as a Lead](#using-nvflare-as-a-lead)
+    - [Using the administrative console](#using-the-administrative-console)
+    - [Testing a Python example](#testing-a-python-example)
+    - [Testing a Python example](#testing-a-python-example-1)
+  - [Using NVFlare as an Org Admin](#using-nvflare-as-an-org-admin)
+    - [Register a client site and clients](#register-a-client-site-and-clients)
+    - [Install a client on AWS](#install-a-client-on-aws)
+    - [Install a client on HPC](#install-a-client-on-hpc)
+    - [Install a client on your WSL Laptop](#install-a-client-on-your-wsl-laptop)
+    - [Verify installation](#verify-installation)
+- [(Not needed right now): Deploying a new NVFlare Project](#not-needed-right-now-deploying-a-new-nvflare-project)
+  - [Installing Dashboard](#installing-dashboard)
+    - [Getting dashboard production ready](#getting-dashboard-production-ready)
+      - [About 1. Start at reboot](#about-1-start-at-reboot)
+      - [About 2. Restart on Error](#about-2-restart-on-error)
+      - [About 3. DNS/HTTPS](#about-3-dnshttps)
+        - [DNS and SSL Certificate through your IT department](#dns-and-ssl-certificate-through-your-it-department)
+        - [DNS through Route53 and let's encrypt SSL](#dns-through-route53-and-lets-encrypt-ssl)
+    - [Configuring Dashboard](#configuring-dashboard)
+    - [Resetting Dashboard](#resetting-dashboard)
+  - [Installing Server](#installing-server)
+  - [Installing Client](#installing-client)
+
 
 # Installing NVFlare deploy environment 
 
@@ -86,6 +120,9 @@ unzip -d ~/.nvflare/myproject ./my-lead\@domain.edu.zip
 ```
 then run `~/.nvflare/myproject/my-lead@domain.edu/startup/fl_admin.sh`, enter the email address `my-lead@domain.edu` when prompted and run the command `check_status server` 
 
+
+### Using the administrative console 
+
 ```
 ~/.nvflare/myproject/my-lead\@domain.edu/startup/fl_admin.sh
 
@@ -106,6 +143,8 @@ Done [1087332 usecs] 2024-05-05 23:28:25.033931
 ```
 
 You are now connected to an NVFlare system. As a next step let's run a test job using python. We will clone the NVFlare repos into a shared project folder to use some of the standard examples
+
+### Testing a Python example 
 
 ```
 cd /shared/myproject
@@ -158,6 +197,8 @@ e8d1e2c9-b47f-43fb-b95a-03551c07b93f was submitted
 {'name': 'hello-numpy-sag', 'resource_spec': {}, 'min_clients': 2, 'deploy_map': {'app': ['@ALL']}, 'submitter_name': 'my-lead@domain.edu', 'submitter_org': "FL site", 'submitter_role': 'lead', 'job_folder_name': 'hello-numpy-sag', 'job_id': 'e8d1e2c9-b47f-43fb-b95a-03551c07b93f', 'submit_time': 1715213649.985026, 'submit_time_iso': '2024-05-09T00:14:09.985026+00:00', 'start_time': '', 'duration': 'N/A', 'status': 'SUBMITTED'}
 ```
 
+### Testing a Python example
+
 
 ## Using NVFlare as an Org Admin
 
@@ -167,7 +208,7 @@ If you are the `Org Admin` of a collaborating organization, you join by signing 
 For AWS, lets register a client site with a single T4 GPU with 16GB memory, e.g. AWS-T4 (as of May 2024, the lowest cost instance type with a T4 is g4dn.xlarge, also there is a bug in NVFlare and you can only enter 15GB instead of 16GB memory.) 
 
 
-### Install a client in AWS 
+### Install a client on AWS 
 
 Login as `Org Admin` at `https://myproject.mydomain.edu` and under DOWNLOADS -> Client Sites -> AWS-T4 click "Download Startup Kit" and keep the password.
 
@@ -260,6 +301,8 @@ source ~/.local/nvf/.venv/bin/activate
 python -u -m nvflare.private.fed.app.client.client_train -m $folder -s fed_client.json --set uid=HPC-A40 secure_train=true config_folder=config org=Test
 ```
 
+As you can see we run the nvflare.private.fed.app.client.client_train python module with the HPC-A40 configuration in an Organization named "Test" 
+
 Now let's run this script in the HPC-A40 folder and then use the `tail -f` command to show the output file in real time. 
 
 ```
@@ -276,6 +319,20 @@ There are a few considerations when running NVFlare on an HPC Cluster:
 - You need to determine how long a job you submitted will be allowed to run. In this example we assume that the job can run for 1 day but the policies at your site may be different
 - Most HPC nodes need to allocate a GPU exclusively for the duration of the job. We need to understand that NVFlare client will wait for jobs while a GPU is already allocated which means that the GPU will be idle most times
 - HPC systems using Slurm >=22.05 have the ability to share GPUs across multiple jobs. You can ask your HPC Admin to enable [Slurm GPU Sharding](https://slurm.schedmd.com/gres.html#Sharding) to increase the efficiency of the HPC cluster.
+
+### Install a client on your WSL Laptop
+
+To run NVFlare on WSL Linux, you need an NVidia GPU in your Laptop and Windows 11 or a qualifying version of Windows 10. Please [see details here](https://learn.microsoft.com/en-us/windows/ai/directml/gpu-cuda-in-wsl).
+
+Login as `Org Admin` at `https://myproject.mydomain.edu` and under DOWNLOADS -> Client Sites -> WSL-RTX3080 click "Download Startup Kit" and keep the password.
+
+Move the file to the location where you launched the console install earlier, unzip the server startup kit and enter the password
+
+```bash
+unzip WSL-RTX3080.zip 
+cd WSL-RTX3080
+startup/start.sh
+```
 
 ### Verify installation 
 
@@ -328,7 +385,7 @@ The documentation below is not required for the current project that is explorin
 
 ## Installing Dashboard
 
-The NVFlare dashboard will be created in an isolated AWS account. Please see these instructions to [create the dashboard in AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#create-dashboard-on-aws) or use this command and enter the email address of the `Project Admin` when prompted.
+The NVFlare dashboard will be created in an isolated AWS account. Please see these instructions to [create the dashboard on AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#create-dashboard-on-aws) or use this command and enter the email address of the `Project Admin` when prompted.
 
 ```
 nvflare dashboard --cloud aws
@@ -574,4 +631,4 @@ sudo reboot
 
 ## Installing Client
 
-please see "Using NVFlare as an Org Admin"
+please see [Using NVFlare as an Org Admin](#using-nvflare-as-an-org-admin)
