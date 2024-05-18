@@ -163,11 +163,11 @@ e8d1e2c9-b47f-43fb-b95a-03551c07b93f was submitted
 
 ### Register a client site and clients 
 
-If you are the `Org Admin` of a collaborating organization, you join by signing up at `https://myproject.mydomain.edu` with your email address, Name and password. In a second step you are asked to enter your Organization name. Pick `Org Admin` as your role before you add one or more client sites with number of GPUs and memory per GPU. Here you describe the computers with GPUs that you can access to install NVFlare clients. Give them self-explanatory client site names, for example if your site is a single Windows Laptop with an RTX-3080 GPU you may call it WSL-RTX3080. 
+If you are the `Org Admin` of a collaborating organization, you join by signing up at `https://myproject.mydomain.edu` with your email address, Name and password. In a second step you are asked to enter your Organization name. Pick `Org Admin` as your role before you add one or more client sites with number of GPUs and memory per GPU. Here you describe the computers with GPUs that you can access to install NVFlare clients. Give them self-explanatory client site names, for example if your site is a single Windows Laptop with an RTX-3080 GPU you may call it WSL-RTX3080. If you have an HPC system with A40 GPUs, call one client site HPC-A40.
 For AWS, lets register a client site with a single T4 GPU with 16GB memory, e.g. AWS-T4 (as of May 2024, the lowest cost instance type with a T4 is g4dn.xlarge, also there is a bug in NVFlare and you can only enter 15GB instead of 16GB memory.) 
 
 
-### Install a client 
+### Install a client in AWS 
 
 Login as `Org Admin` at `https://myproject.mydomain.edu` and under DOWNLOADS -> Client Sites -> AWS-T4 click "Download Startup Kit" and keep the password.
 
@@ -233,6 +233,44 @@ sudo DEBIAN_FRONTEND=noninteractive apt install -y nvidia-driver-535 nvidia-util
 sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y
 sudo reboot 
 ```
+
+### Install a client on HPC 
+
+Login as `Org Admin` at `https://myproject.mydomain.edu` and under DOWNLOADS -> Client Sites -> HPC-A40 click "Download Startup Kit" and keep the password.
+
+Move the file to the location where you launched the console install earlier, unzip the server startup kit and enter the password
+
+```bash
+unzip HPC-A40.zip 
+cd HPC-A40
+```
+
+Most HPC systems will use the Slurm workload manager these days. On such a system we don't require the overhead of a container or even a virtual machine that needs to be installed. If our HPC admin allows, we can simply submit a batch job that will launch our NVFlare client. In this case we assume that the HPC admin has made A40 GPUs available as general resource (GRES) named gpu:a40 (`--gres gpu:a40`) and we want a single GPU (`--gres gpu:a40:1`). Let's create a little shell script called `nvflare-HPC-A40.sub` that functions as Slurm batch script:
+
+```bash
+#! /bin/bash
+#SBATCH --job-name "NVFlare Client"
+#SBATCH --time 1-00:00:00  # one day
+#SBATCH --gres gpu:a40:1
+#SBATCH --output nvflare-HPC-A40.out
+#SBATCH --error nvflare-HPC-A40.err
+
+source ~/.local/nvf/.venv/bin/activate
+python -u -m nvflare.private.fed.app.client.client_train -m . -s fed_client.json --set uid=HPC-A40 secure_train=true config_folder=config org=Test
+```
+
+Now let's run this script in the HPC-A40 folder and then use the `tail -f` command to show the output file in real time. 
+
+```
+$ sbatch nvflare-HPC-A40.sub
+Submitted batch job 424459530
+
+tail -f nvflare-HPC-A40.out
+```
+
+If the output file does not exist, the job has not started yet. In that case run the `squeue --me` command to check the reason why your job may not have started yet. If you find squeue a bit complicated, you can simply use `tsqueue` after installing the [slurm-gui Python Package](https://pypi.org/project/slurm-gui). 
+
+Running NVFlare on a SLurm CLuster has a few considerations 
 
 ### Verify installation 
 
