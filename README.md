@@ -255,8 +255,9 @@ Most HPC systems will use the Slurm workload manager these days. On such a syste
 #SBATCH --output nvflare-HPC-A40.out
 #SBATCH --error nvflare-HPC-A40.err
 
+folder=$(pwd)
 source ~/.local/nvf/.venv/bin/activate
-python -u -m nvflare.private.fed.app.client.client_train -m . -s fed_client.json --set uid=HPC-A40 secure_train=true config_folder=config org=Test
+python -u -m nvflare.private.fed.app.client.client_train -m $folder -s fed_client.json --set uid=HPC-A40 secure_train=true config_folder=config org=Test
 ```
 
 Now let's run this script in the HPC-A40 folder and then use the `tail -f` command to show the output file in real time. 
@@ -270,7 +271,11 @@ tail -f nvflare-HPC-A40.out
 
 If the output file does not exist, the job has not started yet. In that case run the `squeue --me` command to check the reason why your job may not have started yet. If you find squeue a bit complicated, you can simply use `tsqueue` after installing the [slurm-gui Python Package](https://pypi.org/project/slurm-gui). 
 
-Running NVFlare on a SLurm CLuster has a few considerations 
+There are a few considerations when running NVFlare on an HPC Cluster:
+
+- You need to determine how long a job you submitted will be allowed to run. In this example we assume that the job can run for 1 day but the policies at your site may be different
+- Most HPC nodes need to allocate a GPU exclusively for the duration of the job. We need to understand that NVFlare client will wait for jobs while a GPU is already allocated which means that the GPU will be idle most times
+- HPC systems using Slurm >=22.05 have the ability to share GPUs across multiple jobs. You can ask your HPC Admin to enable [Slurm GPU Sharding](https://slurm.schedmd.com/gres.html#Sharding) to increase the efficiency of the HPC cluster.
 
 ### Verify installation 
 
