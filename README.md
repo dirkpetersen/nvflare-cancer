@@ -431,7 +431,7 @@ date=$(date)                           # Get the current date for logging
 
 # Check if the search string exists in the HTML source code
 if curl -k -s -m $timeout_duration $url | grep -q "$search_string"; then
-    echo "${date}: OK ! The search string '$search_string' was found in the HTML source code of $ur
+    echo "${date}: OK ! The search string '$search_string' was found in the HTML source code of $url"
 else
     echo "${date}: Error ! The search string '$search_string' was not found in the HTML source code of $url or the connection timed out after $timeout_duration seconds"
     # Run the commands if the search string is not found or the connection times out
