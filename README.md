@@ -277,21 +277,22 @@ sudo reboot
 
 ### Install a client on HPC 
 
-Login as `Org Admin` at `https://myproject.mydomain.edu` and under DOWNLOADS -> Client Sites -> HPC-A40 click "Download Startup Kit" and keep the password.
+Login as `Org Admin` at `https://myproject.mydomain.edu` and confirm that you have added a client site, that you perhaps call HPC-A40 based on the GPUs you use. After this client site is approved by the `Project Admin` you can go to DOWNLOADS -> Client Sites -> HPC-A40 click "Download Startup Kit" and keep the password (write it down somewhere)
 
-Move the file to the location where you launched the console install earlier, unzip the server startup kit and enter the password
+Move the file to the project folder in your file system 
 
 ```bash
 unzip HPC-A40.zip 
 cd HPC-A40
 ```
 
-Most HPC systems will use the Slurm workload manager these days. On such a system we don't require the overhead of a container or even a virtual machine that needs to be installed. If our HPC admin allows, we can simply submit a batch job that will launch our NVFlare client. In this case we assume that the HPC admin has made A40 GPUs available as general resource (GRES) named gpu:a40 (`--gres gpu:a40`) and we want a single GPU (`--gres gpu:a40:1`). Let's create a little shell script called `nvflare-HPC-A40.sub` that functions as Slurm batch script:
+Most HPC systems will use the Slurm workload manager these days. On such a system we don't require the overhead of a container or even a virtual machine that needs to be installed. If our HPC admin allows, we can simply submit a batch job that will launch our NVFlare client. In this case we assume that the HPC admin has made A40 GPUs available as general resource (GRES) named gpu:a40 (`--gres gpu:a40`) and we want a single GPU (`--gres gpu:a40:1`). Let's create a little shell script called `nvflare-PC-A40.sub` that functions as Slurm batch script:
 
 ```bash
 #! /bin/bash
 #SBATCH --job-name "NVFlare Client"
 #SBATCH --time 1-00:00:00  # one day
+#SBATCH --partition gpu    # if you have your GPUs in an extra queue
 #SBATCH --gres gpu:a40:1
 #SBATCH --output nvflare-HPC-A40.out
 #SBATCH --error nvflare-HPC-A40.err
