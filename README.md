@@ -23,7 +23,8 @@ The central NVFlare dashboard and server was installed by the `Project Admin`, t
     - [Testing a Python example](#testing-a-python-example)
     - [Testing a Python example](#testing-a-python-example-1)
   - [Using NVFlare as an Org Admin](#using-nvflare-as-an-org-admin)
-    - [Register a client site and clients](#register-a-client-site-and-clients)
+    - [Register client sites](#register-client-sites)
+      - [Enter available GPU memory](#enter-available-gpu-memory)
     - [Install a client on AWS](#install-a-client-on-aws)
     - [Install a client on HPC](#install-a-client-on-hpc)
     - [Install a client on your WSL Laptop](#install-a-client-on-your-wsl-laptop)
@@ -202,10 +203,21 @@ e8d1e2c9-b47f-43fb-b95a-03551c07b93f was submitted
 
 ## Using NVFlare as an Org Admin
 
-### Register a client site and clients 
+### Register client sites 
 
 If you are the `Org Admin` of a collaborating organization, you join by signing up at `https://myproject.mydomain.edu` with your email address, Name and password. In a second step you are asked to enter your Organization name. Pick `Org Admin` as your role before you add one or more client sites with number of GPUs and memory per GPU. Here you describe the computers with GPUs that you can access to install NVFlare clients. Give them self-explanatory client site names, for example if your site is a single Windows Laptop with an RTX-3080 GPU you may call it WSL-RTX3080. If you have an HPC system with A40 GPUs, call one client site HPC-A40.
-For AWS, lets register a client site with a single T4 GPU with 16GB memory, e.g. AWS-T4 (as of May 2024, the lowest cost instance type with a T4 is g4dn.xlarge, also there is a bug in NVFlare and you can only enter 15GB instead of 16GB memory.) 
+For AWS, lets register a client site with a single T4 GPU with 16GB memory, e.g. AWS-T4 (as of May 2024, the lowest cost instance type with a T4 is g4dn.xlarge) 
+
+#### Enter available GPU memory
+
+As you enter the GPU memory for your sites, please note that you need to enter the **actual** GPU memory which is a bit different from what you find in the GPU specs.
+
+| GPU Type | specs (GB) | actual (GB) |
+|----------|-------------|-------------|
+| A40      | 48          | 44          |
+| T4       | 16          | 15          |
+| x080ti   | 11          | 10          |
+| RTX3080  | 4           | 3           |
 
 
 ### Install a client on AWS 
