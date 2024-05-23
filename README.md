@@ -210,9 +210,9 @@ For AWS, lets register a client site with a single T4 GPU with 16GB memory, e.g.
 
 ### Install a client on AWS 
 
-Login as `Org Admin` at `https://myproject.mydomain.edu` and under DOWNLOADS -> Client Sites -> AWS-T4 click "Download Startup Kit" and keep the password.
+Login as `Org Admin` at `https://myproject.mydomain.edu` and confirm that you have added a client site, that you perhaps call AWS-T4 based on the GPUs you use. After this client site is approved by the `Project Admin` you can go to DOWNLOADS -> Client Sites -> AWS-T4 click "Download Startup Kit" and keep the password (copy it somewhere)
 
-Move the file to the location where you launched the console install earlier, unzip the server startup kit and enter the password
+Move the file to the project folder in your file system, unzip it and paste the password when prompted
 
 ```bash
 unzip AWS-T4.zip 
@@ -277,16 +277,16 @@ sudo reboot
 
 ### Install a client on HPC 
 
-Login as `Org Admin` at `https://myproject.mydomain.edu` and confirm that you have added a client site, that you perhaps call HPC-A40 based on the GPUs you use. After this client site is approved by the `Project Admin` you can go to DOWNLOADS -> Client Sites -> HPC-A40 click "Download Startup Kit" and keep the password (write it down somewhere)
+Login as `Org Admin` at `https://myproject.mydomain.edu` and confirm that you have added a client site, that you perhaps call HPC-A40 based on the GPUs you use. After this client site is approved by the `Project Admin` you can go to DOWNLOADS -> Client Sites -> HPC-A40 click "Download Startup Kit" and keep the password (copy it somewhere)
 
-Move the file to the project folder in your file system 
+Move the file to the project folder in your file system, unzip it and paste the password when prompted
 
 ```bash
 unzip HPC-A40.zip 
 cd HPC-A40
 ```
 
-Most HPC systems will use the Slurm workload manager these days. On such a system we don't require the overhead of a container or even a virtual machine that needs to be installed. If our HPC admin allows, we can simply submit a batch job that will launch our NVFlare client. In this case we assume that the HPC admin has made A40 GPUs available as general resource (GRES) named gpu:a40 (`--gres gpu:a40`) and we want a single GPU (`--gres gpu:a40:1`). Let's create a little shell script called `nvflare-HPC-A40.sub` that functions as Slurm batch script:
+Most modern HPC systems will use the Slurm workload manager. On such a system we don't require the overhead of a container or even a virtual machine that needs to be installed. If our HPC admin allows, we can simply submit a batch job that will launch our NVFlare client. In this case we assume that the HPC admin has made A40 GPUs available as general resource (GRES) named gpu:a40 (`--gres gpu:a40`) and we want a single GPU (`--gres gpu:a40:1`). If you don't care about the specific GPU model, you simply request `--gres gpu:1`. Let's create a little shell script called `nvflare-HPC-A40.sub` that functions as Slurm submission script:
 
 ```bash
 #! /bin/bash
@@ -299,8 +299,10 @@ Most HPC systems will use the Slurm workload manager these days. On such a syste
 
 nvidia-smi
 folder=$(pwd)
+client=HPC-A40
+organization=Test
 source ~/.local/nvf/.venv/bin/activate
-python -u -m nvflare.private.fed.app.client.client_train -m $folder -s fed_client.json --set uid=HPC-A40 secure_train=true config_folder=config org=Test
+python -u -m nvflare.private.fed.app.client.client_train -m ${folder} -s fed_client.json --set uid=${client} secure_train=true config_folder=config org=${organization}
 ```
 
 As you can see we run the nvflare.private.fed.app.client.client_train python module with the HPC-A40 configuration in an Organization named "Test" 
@@ -372,9 +374,9 @@ There are a few considerations when running NVFlare on an HPC Cluster:
 
 To run NVFlare on WSL Linux, you need an NVidia GPU in your Laptop and Windows 11 or a qualifying version of Windows 10. Please [see details here](https://learn.microsoft.com/en-us/windows/ai/directml/gpu-cuda-in-wsl).
 
-Login as `Org Admin` at `https://myproject.mydomain.edu` and under DOWNLOADS -> Client Sites -> WSL-RTX3080 click "Download Startup Kit" and keep the password.
+Login as `Org Admin` at `https://myproject.mydomain.edu` and confirm that you have added a client site, that you perhaps call WSL-RTX3080 based on the GPUs you use. After this client site is approved by the `Project Admin` you can go to DOWNLOADS -> Client Sites -> WSL-RTX3080, click "Download Startup Kit" and keep the password (copy it somewhere)
 
-Move the file to the location where you launched the console install earlier, unzip the server startup kit and enter the password
+Move the file to the project folder in your file system, unzip it and paste the password when prompted
 
 ```bash
 unzip WSL-RTX3080.zip 
