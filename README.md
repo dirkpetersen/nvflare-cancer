@@ -53,7 +53,7 @@ If you want to roll out parts of the infrastruncture to AWS or Azure, you should
 
 ## Installing the right version of Python
 
-For consistency reasons we recommend installing the latest Python version supported by NVFlare (NVFlare 2.40 and Python 3.10 as of May 2024). For our AWS deployment we will use Ubuntu 22.04 (AWS image ami-03c983f9003cb9cd1, which comes with Python 3.10) instead of the default Ubuntu 20.04 (which comes with Python 3.8). To quickly install Python 3.10 in your work environment (Linux, Mac or Windows with WSL Linux) we propose the Rye Package manager by Armin Ronacher (the maker of Flask) as it very fast and can be easily removed. Below are the instructions for Linux (incl. WSL) and Mac. Do not use the Windows instructions [here](https://rye-up.com/) as they are not tested. 
+For consistency reasons we recommend installing the latest Python version supported by NVFlare (NVFlare 2.41 and Python 3.10 as of May 2024). For our AWS deployment we will use Ubuntu 22.04 (AWS image ami-03c983f9003cb9cd1, which comes with Python 3.10) instead of the default Ubuntu 20.04 (which comes with Python 3.8). To quickly install Python 3.10 in your work environment (Linux, Mac or Windows with WSL Linux) we propose the Rye Package manager by Armin Ronacher (the maker of Flask) as it very fast and can be easily removed. Below are the instructions for Linux (incl. WSL) and Mac. Do not use the Windows instructions [here](https://rye-up.com/) as they are not tested. 
 Rye quickly installs Python 3.10 in a reproducible way and makes it the default Python on your system (it will edit file ~/.python-version)
 
 ```bash
