@@ -297,6 +297,7 @@ Most HPC systems will use the Slurm workload manager these days. On such a syste
 #SBATCH --output nvflare-%J.out
 #SBATCH --error nvflare-%J.err
 
+nvidia-smi
 folder=$(pwd)
 source ~/.local/nvf/.venv/bin/activate
 python -u -m nvflare.private.fed.app.client.client_train -m $folder -s fed_client.json --set uid=HPC-A40 secure_train=true config_folder=config org=Test
@@ -327,6 +328,12 @@ fi
 
 # Get the submission script from the argument
 SUBMISSION_SCRIPT="$1"
+
+# Extract the directory where the submission script resides
+SCRIPT_DIR=$(dirname "$SUBMISSION_SCRIPT")
+
+# Change to the script directory
+cd "$SCRIPT_DIR" || { echo "Failed to change directory to $SCRIPT_DIR"; exit 1; }
 
 # Get the job name from the submission script (assuming it's defined in the script)
 JOB_NAME=$(grep -Eo '^#SBATCH --job-name[= ]+("[^"]+"|\S+)' "$SUBMISSION_SCRIPT" | awk -F'[= ]+' '{print $NF}' | tr -d '"')
