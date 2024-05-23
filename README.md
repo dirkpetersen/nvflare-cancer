@@ -290,7 +290,7 @@ Most HPC systems will use the Slurm workload manager these days. On such a syste
 
 ```bash
 #! /bin/bash
-#SBATCH --job-name "NVFlare Client"
+#SBATCH --job-name "NVFlare-HPC-A40"
 #SBATCH --time 1-00:00:00  # one day
 #SBATCH --partition gpu    # if you have your GPUs in an extra queue
 #SBATCH --gres gpu:a40:1
@@ -315,9 +315,49 @@ tail -f nvflare-424459530.out
 
 If the output file does not exist, the job has not started yet. In that case run the `squeue --me` command to check the reason why your job may not have started yet. If you find squeue a bit complicated, you can simply use `tsqueue` after installing the [slurm-gui Python Package](https://pypi.org/project/slurm-gui). 
 
+The next issue is that this job will run for a while and then stop when the maximum time is reached. How can we ensure that we always have a client running. We can use a helper script that periodically checks if a job with the same job name is no longer running, and launch a new job, for example you can create a script `nvflare-check-run.sh` that takes the Slurm submission script as an argument:
+
+```bash
+#!/bin/bash
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 <slurm_submission_script>"
+  exit 1
+fi
+
+# Get the submission script from the argument
+SUBMISSION_SCRIPT="$1"
+
+# Get the job name from the submission script (assuming it's defined in the script)
+JOB_NAME=$(grep -Eo '^#SBATCH --job-name[= ]+("[^"]+"|\S+)' "$SUBMISSION_SCRIPT" | awk -F'[= ]+' '{print $NF}' | tr -d '"')
+
+if [ -z "$JOB_NAME" ]; then
+  echo "--job-name not found in the submission script."
+  exit 1
+fi
+
+# Check if a job with the same name is currently running
+RUNNING_JOB=$(squeue --name="$JOB_NAME" --format="%j" | grep "$JOB_NAME")
+
+if [ -z "$RUNNING_JOB" ]; then
+  # No running job found with the same name, submit the new job
+  sbatch "$SUBMISSION_SCRIPT"
+  echo "Submitted job: $JOB_NAME"
+else
+  echo "Job $JOB_NAME is still running."
+fi
+```
+
+and then you simply add this as a cronjob on your HPC login node, that runs perhaps hourly:
+
+```bash
+(crontab -l 2>/dev/null; echo "46 * * * * \$HOME/bin/nvflare-check-run.sh /shared/nvf/nvflare-HPC-A40.sub >> /shared/nvf/nvflare-check-run.log 2>&1") | crontab
+```
+
 There are a few considerations when running NVFlare on an HPC Cluster:
 
 - You need to determine how long a job you submitted will be allowed to run. In this example we assume that the job can run for 1 day but the policies at your site may be different
+- Check with your HPC admin if it is allowed to run cronjobs on the HPC login node, it will likely be OK if it is a light weight bash script like this one.
 - Most HPC nodes need to allocate a GPU exclusively for the duration of the job. We need to understand that NVFlare client will wait for jobs while a GPU is already allocated which means that the GPU will be idle most times
 - HPC systems using Slurm >=22.05 have the ability to share GPUs across multiple jobs. You can ask your HPC Admin to enable [Slurm GPU Sharding](https://slurm.schedmd.com/gres.html#Sharding) to increase the efficiency of the HPC cluster.
 
