@@ -289,7 +289,7 @@ sudo reboot
 
 ### Install a client on HPC 
 
-Login as `Org Admin` at `https://myproject.mydomain.edu` and confirm that you have added a client site, that you perhaps call HPC-A40 based on the GPUs you use. After this client site is approved by the `Project Admin` you can go to DOWNLOADS -> Client Sites -> HPC-A40 click "Download Startup Kit" and keep the password (copy it somewhere)
+Login as `Org Admin` at `https://myproject.mydomain.edu` and confirm that you have added a client site, that you perhaps call HPC-A40 based on the GPUs you use. Again, make sure you enter the [correct amount of GPU memory](#enter-available-gpu-memory). After this client site is approved by the `Project Admin` you can go to DOWNLOADS -> Client Sites -> HPC-A40 click "Download Startup Kit" and keep the password (copy it somewhere)
 
 Move the file to the project folder in your file system, unzip it and paste the password when prompted
 
@@ -298,7 +298,7 @@ unzip HPC-A40.zip
 cd HPC-A40
 ```
 
-Most modern HPC systems will use the Slurm workload manager. On such a system we don't require the overhead of a container or even a virtual machine that needs to be installed. If our HPC admin allows, we can simply submit a batch job that will launch our NVFlare client. In this case we assume that the HPC admin has made A40 GPUs available as general resource (GRES) named gpu:a40 (`--gres gpu:a40`) and we want a single GPU (`--gres gpu:a40:1`). If you don't care about the specific GPU model, you simply request `--gres gpu:1`. Let's create a little shell script called `nvflare-HPC-A40.sub` that functions as Slurm submission script:
+Most modern HPC systems will use the Slurm workload manager. On such a system you don't require the overhead of a container or even a virtual machine that needs to be installed first. You can simply submit a batch job that will launch the NVFlare client. In this case we assume that the HPC admin has made A40 GPUs available as general resource (GRES) named gpu:a40 (`--gres gpu:a40`) and we want a single GPU (`--gres gpu:a40:1`). If you don't care about the specific GPU model, you simply request `--gres gpu:1`. Let's create a little shell script called `nvflare-HPC-A40.sub` that functions as Slurm submission script:
 
 ```bash
 #! /bin/bash
@@ -317,7 +317,7 @@ source ~/.local/nvf/.venv/bin/activate
 python -u -m nvflare.private.fed.app.client.client_train -m ${folder} -s fed_client.json --set uid=${client} secure_train=true config_folder=config org=${organization}
 ```
 
-As you can see we run the nvflare.private.fed.app.client.client_train python module with the HPC-A40 configuration in an Organization named "Test" 
+As you can see, we run the nvflare.private.fed.app.client.client_train python module with the HPC-A40 configuration in an organization named "Test" 
 
 Now let's run this script in the HPC-A40 folder and then use the `tail -f` command to show the output file in real time. 
 
@@ -371,8 +371,9 @@ fi
 
 and then you simply add this as a cronjob on your HPC login node, that runs perhaps hourly:
 
-```bash
-(crontab -l 2>/dev/null; echo "46 * * * * \$HOME/bin/nvflare-check-run.sh /shared/nvf/nvflare-HPC-A40.sub >> /shared/nvf/nvflare-check-run.log 2>&1") | crontab
+```
+crontab -e
+46 * * * * $HOME/bin/nvflare-check-run.sh /shared/nvf/nvflare-HPC-A40.sub >> /shared/nvf/nvflare-check-run.log 2>&1
 ```
 
 There are a few considerations when running NVFlare on an HPC Cluster:
