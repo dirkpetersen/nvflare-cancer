@@ -330,7 +330,7 @@ tail -f nvflare-424459530.out
 
 If the output file does not exist, the job has not started yet. In that case run the `squeue --me` command to check the reason why your job may not have started yet. If you find squeue a bit complicated, you can simply use `tsqueue` after installing the [slurm-gui Python Package](https://pypi.org/project/slurm-gui). 
 
-The next issue is that this job will run for a while and then stop when the maximum time is reached. How can we ensure that we always have a client running. We can use a helper script that periodically checks if a job with the same job name is no longer running, and launch a new job, for example you can create a script `nvflare-check-run.sh` that takes the Slurm submission script as an argument:
+The next issue is that this job will run for a while and then stop when the maximum time is reached. How can you ensure that there is always a client running? As a workaround you can use a helper script that periodically checks if a job with the same job name has been stopped, and launch a new job. For example, you can create a script `nvflare-check-run.sh` that takes the Slurm submission script as an argument:
 
 ```bash
 #!/bin/bash
