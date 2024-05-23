@@ -286,7 +286,7 @@ unzip HPC-A40.zip
 cd HPC-A40
 ```
 
-Most HPC systems will use the Slurm workload manager these days. On such a system we don't require the overhead of a container or even a virtual machine that needs to be installed. If our HPC admin allows, we can simply submit a batch job that will launch our NVFlare client. In this case we assume that the HPC admin has made A40 GPUs available as general resource (GRES) named gpu:a40 (`--gres gpu:a40`) and we want a single GPU (`--gres gpu:a40:1`). Let's create a little shell script called `nvflare-PC-A40.sub` that functions as Slurm batch script:
+Most HPC systems will use the Slurm workload manager these days. On such a system we don't require the overhead of a container or even a virtual machine that needs to be installed. If our HPC admin allows, we can simply submit a batch job that will launch our NVFlare client. In this case we assume that the HPC admin has made A40 GPUs available as general resource (GRES) named gpu:a40 (`--gres gpu:a40`) and we want a single GPU (`--gres gpu:a40:1`). Let's create a little shell script called `nvflare-HPC-A40.sub` that functions as Slurm batch script:
 
 ```bash
 #! /bin/bash
@@ -294,8 +294,8 @@ Most HPC systems will use the Slurm workload manager these days. On such a syste
 #SBATCH --time 1-00:00:00  # one day
 #SBATCH --partition gpu    # if you have your GPUs in an extra queue
 #SBATCH --gres gpu:a40:1
-#SBATCH --output nvflare-HPC-A40.out
-#SBATCH --error nvflare-HPC-A40.err
+#SBATCH --output nvflare-%J.out
+#SBATCH --error nvflare-%J.err
 
 folder=$(pwd)
 source ~/.local/nvf/.venv/bin/activate
@@ -310,7 +310,7 @@ Now let's run this script in the HPC-A40 folder and then use the `tail -f` comma
 $ sbatch nvflare-HPC-A40.sub
 Submitted batch job 424459530
 
-tail -f nvflare-HPC-A40.out
+tail -f nvflare-424459530.out
 ```
 
 If the output file does not exist, the job has not started yet. In that case run the `squeue --me` command to check the reason why your job may not have started yet. If you find squeue a bit complicated, you can simply use `tsqueue` after installing the [slurm-gui Python Package](https://pypi.org/project/slurm-gui). 
