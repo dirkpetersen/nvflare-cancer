@@ -305,7 +305,7 @@ Most modern HPC systems will use the Slurm workload manager. On such a system yo
 #SBATCH --job-name "NVFlare-HPC-A40"
 #SBATCH --time 1-00:00:00  # one day
 #SBATCH --partition gpu    # if you have your GPUs in an extra queue
-#SBATCH --gres gpu:a40:1
+#SBATCH --gres gpu:a40:1   # or --gpus a40:1 with recent Slurm versions
 #SBATCH --output nvflare-%J.out
 #SBATCH --error nvflare-%J.err
 
