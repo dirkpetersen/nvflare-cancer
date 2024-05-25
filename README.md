@@ -298,7 +298,7 @@ unzip HPC-A40.zip
 cd HPC-A40
 ```
 
-Most modern HPC systems will use the Slurm workload manager. On such a system you don't require the overhead of a container or even a virtual machine that needs to be installed first. You can simply submit a batch job that will launch the NVFlare client. In this case we assume that the HPC admin has made A40 GPUs available as general resource (GRES) named gpu:a40 (`--gres gpu:a40`) and we want a single GPU (`--gres gpu:a40:1`). If you don't care about the specific GPU model, you simply request `--gres gpu:1`. Let's create a little shell script called `nvflare-HPC-A40.sub` that functions as Slurm submission script:
+Most modern HPC systems will use the Slurm workload manager. On such a system you don't require the overhead of a container or even a virtual machine that needs to be installed first. You can simply submit a batch job that will launch the NVFlare client. In this case we assume that the HPC admin has made A40 GPUs available as general resource (GRES) named gpu:a40 (`--gres gpu:a40`) and we want a single GPU (`--gres gpu:a40:1`). If you don't care about the specific GPU model, you simply request `--gres gpu:1`. (With newer versions of Slurm you can also use `--gpus a40:1` or `--gpus 1`) Let's create a little shell script called `nvflare-HPC-A40.sub` that functions as Slurm submission script:
 
 ```bash
 #! /bin/bash
