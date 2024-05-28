@@ -21,7 +21,9 @@ The central NVFlare dashboard and server was installed by the `Project Admin`, t
   - [Using NVFlare as a Lead](#using-nvflare-as-a-lead)
     - [Using the administrative console](#using-the-administrative-console)
     - [Testing a Python example](#testing-a-python-example)
-    - [Testing a Python example](#testing-a-python-example-1)
+    - [Testing a Pytorch example](#testing-a-pytorch-example)
+    - [Troubleshooting](#troubleshooting)
+      - [SSL issue](#ssl-issue)
   - [Using NVFlare as an Org Admin](#using-nvflare-as-an-org-admin)
     - [Register client sites](#register-client-sites)
       - [Enter available GPU memory](#enter-available-gpu-memory)
@@ -53,11 +55,15 @@ If you want to roll out parts of the infrastruncture to AWS or Azure, you should
 
 ## Installing the right version of Python
 
-For consistency reasons we recommend installing the latest Python version supported by NVFlare (NVFlare 2.41 and Python 3.10 as of May 2024). For our AWS deployment we will use Ubuntu 22.04 (AWS image ami-03c983f9003cb9cd1, which comes with Python 3.10) instead of the default Ubuntu 20.04 (which comes with Python 3.8). To quickly install Python 3.10 in your work environment (Linux, Mac or Windows with WSL Linux) we propose the Rye Package manager by Armin Ronacher (the maker of Flask) as it very fast and can be easily removed. Below are the instructions for Linux (incl. WSL) and Mac. Do not use the Windows instructions [here](https://rye-up.com/) as they are not tested. 
-Rye quickly installs Python 3.10 in a reproducible way and makes it the default Python on your system (it will edit file ~/.python-version)
+For consistency reasons we recommend installing the latest Python version supported by NVFlare (NVFlare 2.41 and Python 3.10 as of May 2024). For our AWS deployment we will use Ubuntu 22.04 (AWS image ami-03c983f9003cb9cd1, which comes with Python 3.10) instead of the default Ubuntu 20.04 (which comes with Python 3.8). To quickly install Python 3.10 in your work environment (Linux, Mac or Windows with WSL Linux) we propose the Rye Package manager by Armin Ronacher (the maker of Flask) as it very fast and can be easily removed. Below are the instructions for Linux (incl. WSL) and Mac. Do not use the Windows instructions [here](https://rye.astral.sh/) as they are not tested. Run and accept the defaults:  
 
 ```bash
-curl -sSf https://rye-up.com/get | bash
+curl -sSf https://rye.astral.sh/get | bash
+```
+
+Rye quickly installs Python 3.10 in a reproducible way and makes it the default Python on your system (it will edit file ~/.python-version)
+
+```
 . ~/.rye/env
 rye fetch 3.10
 rye pin 3.10
@@ -77,7 +83,7 @@ Python 3.10.14
 install NVFlare in a new virtual environment at `~/.local/nvf` and source it
 
 ```bash
-$ rye init ~/.local/nvf && cd ~/.local/nvf && rye add nvflare && rye sync && cd ~
+$ rye init ~/.local/nvf && cd ~/.local/nvf && rye add nvflare jupyterlab pip && rye sync && cd ~
 
 success: Initialized project in /home/pytester/.local/nvf
   Run `rye sync` to get started
@@ -198,8 +204,63 @@ e8d1e2c9-b47f-43fb-b95a-03551c07b93f was submitted
 {'name': 'hello-numpy-sag', 'resource_spec': {}, 'min_clients': 2, 'deploy_map': {'app': ['@ALL']}, 'submitter_name': 'my-lead@domain.edu', 'submitter_org': "FL site", 'submitter_role': 'lead', 'job_folder_name': 'hello-numpy-sag', 'job_id': 'e8d1e2c9-b47f-43fb-b95a-03551c07b93f', 'submit_time': 1715213649.985026, 'submit_time_iso': '2024-05-09T00:14:09.985026+00:00', 'start_time': '', 'duration': 'N/A', 'status': 'SUBMITTED'}
 ```
 
-### Testing a Python example
+### Testing a Pytorch example
 
+The next step is running a Pytorch example with our infratructure. We are going to use the popular cifar10 example. First let's ensure we have the required packages and then we clone the NVFlare repository to get the examples and copy the hellp-pt example into a folder for all our workspaces (NVFlare/wksps/)
+
+```
+python3 -m pip install torch torchvision 
+cd ~ 
+git clone git@github.com:NVIDIA/NVFlare.git
+cp -rf ~/NVFlare/examples/hello-world/hello-pt ~/NVFlare/wksps/hello-pt
+```
+
+Optional: In a separate terminal you can start a jupyter lab server and continue some of this work from there. The output says somewhere towards the end: **copy and paste one of these URLs** into a browser: 
+
+```
+jupyter lab --no-browser --notebook-dir ~/NVFlare/
+```
+
+Next we'll use the nvflare simulator to run a job on 2 clients that is configured inside the workspace: 
+
+```
+cd ~/NVFlare
+nvflare simulator -w wksps/hello-pt -n 2 wksps/hello-pt/jobs/hello-pt
+```
+
+after this you can see the output of this simulation unter `wksps/hello-pt/simulate_jobs`, for example in the `models` sub folder. 
+
+Next we'll run this in `poc` mode which a bit closer to production than simulator and once `poc` works you can easily deploy to production
+
+### Troubleshooting
+
+#### SSL issue 
+
+You may get this SSL error in log.txt with some versions of Python and Red Hat linux
+
+```
+urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1007)>
+```
+as a workaround edit file `site-packages/sitecustomize.py`
+
+```
+vi $(python -c "import site; print(site.getsitepackages()[0])")/sitecustomize.py
+```
+
+and paste in this content, it will fix the issue for all scripts using this Python installation:
+
+```python 
+import ssl
+try:
+    import certifi
+    # Define a function that returns a default SSL context with certifi's CA bundle
+    def create_certifi_context(purpose=ssl.Purpose.SERVER_AUTH, *, cafile=None, capath=None, cadata=None):
+        return ssl.create_default_context(purpose, cafile=certifi.where(), capath=capath, cadata=cadata)
+    # Set the default SSL context creation function to use certifi's CA bundle
+    ssl._create_default_https_context = create_certifi_context
+except:
+    print('certifi package not installed')
+```
 
 ## Using NVFlare as an Org Admin
 
@@ -231,17 +292,23 @@ unzip AWS-T4.zip
 cd AWS-T4
 ```
 
+Now make sure all python packages that you might need, are listed in startup/requirements.txt:
+
+```
+ echo -e "torch\ntorchvision\ntensorboard" >> startup/requirements.txt
+```
+
 follow [these instructions to install the client on AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#deploy-fl-client-on-aws) or execute this command: 
 
 ```bash
 startup/start.sh --cloud aws     # this is only needed for full automation: --config my_config.txt
 ```
 
-then you get 3 questions asked, and instead of the default AMI (Ubuntu 20.04) you pick the slightly newer 22.04 (ami-03c983f9003cb9cd1) and you also pick a relatively low cost AWS instance with a T4 GPU, for example g4dn.xlarge. If you are running just a first test, it is fine to install the default and low cost t2.small instance.
+then you get 3 questions asked, and instead of the default AMI (Ubuntu 20.04) you pick the slightly newer 22.04 (ami-03c983f9003cb9cd1 for a plain image or ami-061debf863768593d for an image that has the nvidia drivers pre-installed) and you also pick a relatively low cost AWS instance with a T4 GPU, for example g4dn.xlarge. If you are running just a first test, it is fine to install the default and low cost t2.small instance.
 
 
 ```
-Cloud AMI image, press ENTER to accept default ami-04bad3c587fe60d89: ami-03c983f9003cb9cd1
+Cloud AMI image, press ENTER to accept default ami-04bad3c587fe60d89: ami-061debf863768593d
 Cloud EC2 type, press ENTER to accept default t2.small: g4dn.xlarge
 Cloud EC2 region, press ENTER to accept default us-west-2:
 region = us-west-2, ami image = ami-03c983f9003cb9cd1, EC2 type = g4dn.xlarge, OK? (Y/n) y
@@ -278,7 +345,7 @@ add a cronjob to ensure that the client will restart after a reboot
 (crontab -l 2>/dev/null; echo "@reboot  /var/tmp/cloud/startup/start.sh >> /var/tmp/nvflare-client-start.log 2>&1") | crontab
 ```
 
-Make sure the newest GPU drivers and other packages are installed:
+If you have picked the plain image without NVidia software, make sure the newest GPU drivers and potential other packages are installed:
 
 ```bash
 sudo apt update
