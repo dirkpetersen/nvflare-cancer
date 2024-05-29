@@ -22,6 +22,8 @@ The central NVFlare dashboard and server was installed by the `Project Admin`, t
     - [Using the administrative console](#using-the-administrative-console)
     - [Testing a Python example](#testing-a-python-example)
     - [Testing a Pytorch example](#testing-a-pytorch-example)
+      - [Pytorch simulator mode](#pytorch-simulator-mode)
+      - [Pytorch poc mode](#pytorch-poc-mode)
     - [Troubleshooting](#troubleshooting)
       - [SSL issue](#ssl-issue)
   - [Using NVFlare as an Org Admin](#using-nvflare-as-an-org-admin)
@@ -149,49 +151,81 @@ Done [1087332 usecs] 2024-05-05 23:28:25.033931
 
 ```
 
-You are now connected to an NVFlare system. As a next step let's run a test job using python. We will clone the NVFlare repos into a shared project folder to use some of the standard examples
+You are now connected to an NVFlare system. As a next step let's run a test job using python. 
 
 ### Testing a Python example 
 
-```
+We will clone the NVFlare repos into a shared project folder to use some of the standard examples and create a new folder `wksps` and change to it:
+
+```bash
 cd /shared/myproject
-git clone https://github.com/NVIDIA/NVFlare
+git clone https://github.com/NVIDIA/NVFlare  # or git@github.com:NVIDIA/NVFlare.git
+mkdir NVFlare/wksps
+cd NVFlare/wksps
 ```
 
-and then copy this python example to file fl-test.py: 
+Let's copy the standard code sample into the current folder before we run it. 
+
+```bash
+cp -rf ../examples/hello-world/hello-numpy-sag ./hello-numpy-sag
+```
+
+and then copy the python code below to file `submit-nvflare-job.py` and set project and lead username: 
 
 ```python
 #! /usr/bin/env python3
 
-import os
+import os, sys, argparse
 import nvflare.fuel.flare_api.flare_api as nvf
 
-flprj = "myproject"
-username = "my-lead@domain.edu" 
-myjob = "/shared/myproject/NVFlare/examples/hello-world/hello-numpy-sag/jobs/hello-numpy-sag"
+project = "myproject"
+username = "my-lead@mydomain.edu"
+pocstartup = '/tmp/nvflare/poc/example_project/prod_00'
 
-authloc = os.path.join(os.path.expanduser("~"),
-                ".nvflare", flprj, username)
+parser = argparse.ArgumentParser(description='NVFlare job submission with various options')
+parser.add_argument('jobfolder', type=str, help='folder that contains an nvflare job, e.g. meta.json')
+parser.add_argument('--poc', action='store_true', help='Enable POC mode')
+parser.add_argument('--debug', action='store_true', help='Enable debug mode')
+parser.add_argument('--timeout', type=int, default=3600, help=f'NVFlare time (default: 3600 sec)')
+parser.add_argument('--username', type=str, default=username, help=f'Lead user name (default:{username})')
+parser.add_argument('--project', type=str, default=project, help=f'A folder under ~/.nvflare (default: {project})')
+args = parser.parse_args()
+
+startupkit = os.path.join(os.path.expanduser("~"),
+          ".nvflare", args.project, args.username)
+
+if args.poc:
+    args.username = 'admin@nvidia.com'
+    startupkit = os.path.join(pocstartup,args.username)
+    print(f'Launching poc with startup kit: {startupkit}')
 
 sess = nvf.new_secure_session(
-    username=username,
-    startup_kit_location=authloc
+    username=args.username,
+    startup_kit_location=startupkit,
+    debug=args.debug,
+    timeout=args.timeout
 )
 
 print(sess.get_system_info())
 
-# You must use an absolute path here:
-job_id = sess.submit_job(myjob)
+job_folder = os.path.join(os.getcwd(), args.jobfolder) # absolute path required
+print(f'Submitting job {job_folder} ...')
+job_id = sess.submit_job(job_folder)
 print(f"{job_id} was submitted")
+
 
 sess.monitor_job(job_id, cb=nvf.basic_cb_with_print, cb_run_counter={"count":0})
 ```
 
-Once you run the Python script you should see something like this:
+Once you run the job submit script 
 
 ```
-$ python3 ./fl-test.py
+python3 submit-nvflare-job.py hello-numpy-sag/jobs/hello-numpy-sag
+```
 
+you should see something like this 
+
+```
 SystemInfo
 server_info:
 status: stopped, start_time: Sun May  5 23:25:37 2024
@@ -206,13 +240,13 @@ e8d1e2c9-b47f-43fb-b95a-03551c07b93f was submitted
 
 ### Testing a Pytorch example
 
-The next step is running a Pytorch example with our infratructure. We are going to use the popular cifar10 example. First let's ensure we have the required packages and then we clone the NVFlare repository to get the examples and copy the hellp-pt example into a folder for all our workspaces (NVFlare/wksps/)
+The next step is running a Pytorch example with our infratructure. We are going to use the popular cifar10 example, which includes downloading of some image data. If you have not cloned the NVFlare repository and changed to folder NVFlare/wksps or setup `submit-nvflare-job.py` yet, please see the [Python example](#testing-a-python-example) first.
+Then let's copy the hellp-pt example into our working directory (NVFlare/wksps/) and  install the required packages (torch & torchvision)
 
-```
-python3 -m pip install torch torchvision 
-cd ~ 
-git clone git@github.com:NVIDIA/NVFlare.git
-cp -rf ~/NVFlare/examples/hello-world/hello-pt ~/NVFlare/wksps/hello-pt
+```bash
+cd NVFlare/wksps
+cp -rf ../examples/hello-world/hello-pt ./hello-pt
+python3 -m pip install ./hello-pt/requirements.txt
 ```
 
 Optional: In a separate terminal you can start a jupyter lab server and continue some of this work from there. The output says somewhere towards the end: **copy and paste one of these URLs** into a browser: 
@@ -221,16 +255,87 @@ Optional: In a separate terminal you can start a jupyter lab server and continue
 jupyter lab --no-browser --notebook-dir ~/NVFlare/
 ```
 
+#### Pytorch simulator mode
+
 Next we'll use the nvflare simulator to run a job on 2 clients that is configured inside the workspace: 
 
 ```
-cd ~/NVFlare
-nvflare simulator -w wksps/hello-pt -n 2 wksps/hello-pt/jobs/hello-pt
+nvflare simulator -w ./hello-pt -n 2 ./hello-pt/jobs/hello-pt
 ```
 
-after this you can see the output of this simulation unter `wksps/hello-pt/simulate_jobs`, for example in the `models` sub folder. 
+after this you can see the output of this simulation unter `./hello-pt/simulate_jobs`, for example in the `models` sub folder. 
 
-Next we'll run this in `poc` mode which a bit closer to production than simulator and once `poc` works you can easily deploy to production
+#### Pytorch poc mode
+
+Next we'll run `hello-pt` in `poc` mode which a bit closer to production than simulator as it installs all the servers and clients on a single machine, and sets up the same tcp/ip communication path as if they were on different servers. Once `poc` works, you can easily deploy to production. 
+For `poc` mode we need to have a single machine with ideally 2 GPUs. If there is an HPC cluster, let's request a machine interactivelty for one day: `srun -p gpu --gres gpu:2 -t 1-0 --pty bash`. Once this is allocated, open up a second terminal window and try to request a second shell on the same machine, assuming that machine is called `node-7`: `srun -w node-7 -p gpu -t 1-0 --pty bash`
+
+Now let's source the virtual envionment again and switch to our workspaces directory in both terminal windows.  
+
+```
+source ~/.local/nvf/.venv/bin/activate
+cd NVFlare/wksps
+```
+
+in the first terminal run these commands: 
+
+```
+nvflare poc prepare -n 2
+nvflare poc start
+```
+
+and in the second terminal you simply run `submit-nvflare-job.py` with the `--poc` option
+
+```
+python3 submit-nvflare-job.py --poc hello-pt/jobs/hello-pt
+```
+
+and the output looks similar to this:
+
+```
+Launching poc with startup kit: /tmp/nvflare/poc/example_project/prod_00/admin@nvidia.com
+SystemInfo
+server_info:
+status: started, start_time: Tue May 28 09:04:52 2024
+client_info:
+site-1(last_connect_time: Tue May 28 21:14:53 2024)
+site-2(last_connect_time: Tue May 28 21:14:49 2024)
+job_info:
+JobInfo:
+  job_id: 972c9a2a-aecd-494c-bc60-6c7e7dc5fc99
+  app_name: app
+Submitting job /shared/myproject/NVFlare/wksps/hello-pt/jobs/hello-pt/ ...
+ea8e0913-fe42-488f-8b37-0c0bcb40a52f was submitted
+
+{'name': 'hello-pt', 'resource_spec': {}, 'min_clients': 2, 'deploy_map': {'app': ['@ALL']}, 'submitter_name': 'admin@nvidia.com', 'submitter_org': 'nvidia', 'submitter_role': 'project_admin', 'job_folder_name': 'hello-pt', 'job_id': 'ea8e0913-fe42-488f-8b37-0c0bcb40a52f', 'submit_time': 1716956099.7929182, 'submit_time_iso': '2024-05-28T21:14:59.792918-07:00', 'start_time': '', 'duration': 'N/A', 'status': 'SUBMITTED'}
+
+```
+
+once poc mode is working you can use `submit-nvflare-job.py` to submit to the production infrastructure, if there is a problem you can use the --debug option to learn more 
+
+```
+python3 submit-nvflare-job.py hello-pt/jobs/hello-pt
+```
+
+The `submit-nvflare-job.py` script has a number of options
+
+```
+python3 submit-nvflare-job.py --help
+usage: submit-nvflare-job.py [-h] [--poc] [--debug] [--timeout TIMEOUT] [--username USERNAME] [--project PROJECT] jobfolder
+
+NVFlare job submission with various options
+
+positional arguments:
+  jobfolder            folder that contains an nvflare job, e.g. meta.json
+
+options:
+  -h, --help           show this help message and exit
+  --poc                Enable POC mode
+  --debug              Enable debug mode
+  --timeout TIMEOUT    NVFlare time (default: 3600 sec)
+  --username USERNAME  Lead user name (default:my-lead@mydomain.edu)
+  --project PROJECT    A folder under ~/.nvflare (default: myproject)
+```
 
 ### Troubleshooting
 
