@@ -25,6 +25,7 @@ The central NVFlare dashboard and server was installed by the `Project Admin`, t
       - [Pytorch simulator mode](#pytorch-simulator-mode)
       - [Pytorch poc mode](#pytorch-poc-mode)
     - [Troubleshooting](#troubleshooting)
+      - [missing server dependencies](#missing-server-dependencies)
       - [SSL issue](#ssl-issue)
   - [Using NVFlare as an Org Admin](#using-nvflare-as-an-org-admin)
     - [Register client sites](#register-client-sites)
@@ -338,6 +339,10 @@ options:
 ```
 
 ### Troubleshooting
+
+#### missing server dependencies
+
+If you get an `Error 113` in the server log, this might mean that a dependency on the server is missing. For example, the NVFlare hello-pt example does not only require Pytorch on the clients but also on the server. To confirm the root cause, use the FLARE console (admin CLI) to login, and execute command download_job [job-id] to get the entire workspace folder. You will find it in the transfer folder of the console. Please check the workspace/log.txt inside the job folder for more details.
 
 #### SSL issue 
 
