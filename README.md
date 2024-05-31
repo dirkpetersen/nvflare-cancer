@@ -837,7 +837,11 @@ If the server requires additional dependencies, please copy the requirements.txt
 Press ENTER when it's done or no additional dependencies.
 ```
 
-After this you should get confirmation that `myproject-server.mydomain.edu` was installed. Then find out the INSTANCE_ID of the instance you created and associate it with the second allocation id for the elastic IP you created earlier: 
+Note: Do NOT put a `requirements.txt` file into the startup folder at this time. You need to increase the size of the file system of this server, before you can install other packages such as pytorch as they are large and come with many dependencies. 
+
+After this you should get confirmation that `myproject-server.mydomain.edu` was installed. You should now [increase the disk (EBS volume)](https://docs.aws.amazon.com/ebs/latest/userguide/requesting-ebs-volume-modifications.html) to at least 16GB 
+
+Then find out the INSTANCE_ID of the instance you created and associate it with the second allocation id for the elastic IP you created earlier: 
 
 ```bash
 aws ec2 describe-instances #  get YOUR_INSTANCE_ID
@@ -856,7 +860,17 @@ add a cronjob to ensure that the server will restart after a reboot
 (crontab -l 2>/dev/null; echo "@reboot  /var/tmp/cloud/startup/start.sh >> /var/tmp/nvflare-server-start.log 2>&1") | crontab
 ```
 
-Make sure the newest packages are installed:
+Now you should [increase the partition and file system size](https://docs.aws.amazon.com/ebs/latest/userguide/recognize-expanded-volume-linux.html) of your instance to the disk size you set before (using growpart and resizefs). Then make sure you install some packages that may be required by NVFlare examples such as 'hello-pt' and finally delete your pip cache (this can save gigabytes of disk space)
+
+
+```
+sudo growpart /dev/xvda 1
+sudo resize2fs /dev/xvda1
+python3 -m pip install --upgrade torch pandas
+rm -rf ~/.cache/pip
+```
+
+Finally make sure the newest packages are installed and that a reboot works
 
 ```bash
 sudo apt update
