@@ -426,6 +426,9 @@ If the client requires additional dependencies, please copy the requirements.txt
 Press ENTER when it's done or no additional dependencies.
 ```
 
+Note: Do NOT put a requirements.txt file into the startup folder at this time. You need to increase the size of the file system of this server, before you can install other packages such as pytorch as they are large and come with many dependencies.
+
+
 The output should be similar to this :
 
 ```
@@ -455,11 +458,31 @@ add a cronjob to ensure that the client will restart after a reboot
 (crontab -l 2>/dev/null; echo "@reboot  /var/tmp/cloud/startup/start.sh >> /var/tmp/nvflare-client-start.log 2>&1") | crontab
 ```
 
-If you have picked the plain image without NVidia software, make sure the newest GPU drivers and potential other packages are installed:
+Now you should [increase the disk (EBS volume)](https://docs.aws.amazon.com/ebs/latest/userguide/requesting-ebs-volume-modifications.html) to at least 16GB and then [grow the partition and file system size](https://docs.aws.amazon.com/ebs/latest/userguide/recognize-expanded-volume-linux.html) of your instance to the disk size you set by using growpart and resizefs. 
+
+```bash
+sudo growpart /dev/xvda 1
+sudo resize2fs /dev/xvda1
+```
+
+If you have picked the plain image without NVidia drivers and software, make sure the newest GPU drivers and potential other packages are installed:
 
 ```bash
 sudo apt update
 sudo DEBIAN_FRONTEND=noninteractive apt install -y nvidia-driver-535 nvidia-utils-535
+```
+
+Then make sure you install some packages that may be required by NVFlare examples such as 'hello-pt' and finally delete your pip cache (this can save gigabytes of disk space)
+
+```bash
+python3 -m pip install --upgrade torch torchvision tensorboard pandas numpy
+rm -rf ~/.cache/pip
+```
+
+Finally make sure the newest packages are installed and that a reboot works
+
+```bash
+sudo apt update
 sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y
 sudo reboot 
 ```
