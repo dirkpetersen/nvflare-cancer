@@ -402,14 +402,23 @@ unzip AWS-T4.zip
 cd AWS-T4
 ```
 
-follow [these instructions to install the client on AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#deploy-fl-client-on-aws) or execute this command: 
+then you add the packages you need in the client to `startup/requirements.txt` :
+
+```bash
+echo -e "torch \ntorchvision \ntensorboard" >> startup/requirements.txt
+```
+
+and use the `start.sh` script or follow [these instructions to install the client on AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#deploy-fl-client-on-aws): 
 
 ```bash
 startup/start.sh --cloud aws     # this is only needed for full automation: --config my_config.txt
 ```
 
-then you get 3 questions asked, and instead of the default AMI (Ubuntu 20.04) you pick the slightly newer 22.04 (ami-03c983f9003cb9cd1 for a plain image or ami-061debf863768593d for an image that has the nvidia drivers pre-installed) and you also pick a relatively low cost AWS instance with a T4 GPU, for example g4dn.xlarge. If you are running just a first test, it is fine to install the default and low cost t2.small instance.
-
+then you get asked 3 questions, and instead of the default AMI (Ubuntu 20.04) you pick the slightly newer image for Ubuntu 22.04 that has Python 3.10. There are 2 choices: 
+- ami-03c983f9003cb9cd1 is a plain image with 8GB disk size that is reasonable for testing without GPU. For this one you pick the `t2.small` instance type
+- ami-061debf863768593d is a AI/ML image with 64GB disk size that has the nvidia drivers pre-installed. For this one you pick a relatively low cost AWS instance with a T4 GPU, for example `g4dn.xlarge` . 
+  
+If you are running just a first test, it is fine to install the default and low cost t2.small instance.
 
 ```
 Cloud AMI image, press ENTER to accept default ami-04bad3c587fe60d89: ami-061debf863768593d
@@ -419,8 +428,6 @@ region = us-west-2, ami image = ami-03c983f9003cb9cd1, EC2 type = g4dn.xlarge, O
 If the client requires additional dependencies, please copy the requirements.txt to AWS-T4/startup/
 Press ENTER when it's done or no additional dependencies.
 ```
-
-Note: Do NOT put a requirements.txt file into the startup folder at this time. You need to increase the size of the file system of this server, before you can install other packages such as pytorch as they are large and come with many dependencies.
 
 
 The output should be similar to this :
@@ -452,28 +459,36 @@ add a cronjob to ensure that the client will restart after a reboot
 (crontab -l 2>/dev/null; echo "@reboot  /var/tmp/cloud/startup/start.sh >> /var/tmp/nvflare-client-start.log 2>&1") | crontab
 ```
 
-Now you should [increase the disk (EBS volume)](https://docs.aws.amazon.com/ebs/latest/userguide/requesting-ebs-volume-modifications.html) to at least 16GB and then [grow the partition and file system size](https://docs.aws.amazon.com/ebs/latest/userguide/recognize-expanded-volume-linux.html) of your instance to the disk size you set by using growpart and resizefs. 
+The `df -h` command will inform you, that the client file system does not have too much free disk space.
+
+```bash
+~$ df -h
+Filesystem                      Size  Used Avail Use% Mounted on
+/dev/root                        63G   56G  7.6G  89% /
+```
+
+You might want to [increase the disk (EBS volume)](https://docs.aws.amazon.com/ebs/latest/userguide/requesting-ebs-volume-modifications.html) and then [grow the partition and file system size](https://docs.aws.amazon.com/ebs/latest/userguide/recognize-expanded-volume-linux.html) accordingly by using `growpart` and `resizefs`. 
 
 ```bash
 sudo growpart /dev/xvda 1
 sudo resize2fs /dev/xvda1
 ```
 
-If you have picked the plain image without NVidia drivers and software, make sure the newest GPU drivers and potential other packages are installed:
+If you have picked the plain image without NVidia drivers and software, make sure the newest GPU drivers and potential other packages are installed (this can eat up quite a bit of disk space):
 
 ```bash
 sudo apt update
 sudo DEBIAN_FRONTEND=noninteractive apt install -y nvidia-driver-535 nvidia-utils-535
 ```
 
-Then make sure you install some packages that may be required by NVFlare examples such as 'hello-pt' and finally delete your pip cache (this can save gigabytes of disk space)
+In case you forgot to add some packages to requirements.txt, that may be required by other NVFlare examples, you add them an and finally you should delete your pip cache (this can save gigabytes of disk space)
 
 ```bash
-python3 -m pip install --upgrade torch torchvision tensorboard pandas numpy
+python3 -m pip install --upgrade pandas numpy
 rm -rf ~/.cache/pip
 ```
 
-Finally make sure the newest packages are installed and that a reboot works
+As a last step, make sure the newest packages are installed and that a reboot works
 
 ```bash
 sudo apt update
