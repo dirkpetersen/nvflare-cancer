@@ -402,12 +402,6 @@ unzip AWS-T4.zip
 cd AWS-T4
 ```
 
-Now make sure all python packages that you might need, are listed in startup/requirements.txt:
-
-```
- echo -e "torch\ntorchvision\ntensorboard" >> startup/requirements.txt
-```
-
 follow [these instructions to install the client on AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#deploy-fl-client-on-aws) or execute this command: 
 
 ```bash
