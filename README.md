@@ -31,6 +31,8 @@ The central NVFlare dashboard and server was installed by the `Project Admin`, t
     - [Register client sites](#register-client-sites)
       - [Enter available GPU memory](#enter-available-gpu-memory)
     - [Install a client on AWS](#install-a-client-on-aws)
+      - [additional configuration steps](#additional-configuration-steps)
+      - [upgrade all packages](#upgrade-all-packages)
     - [Install a client on HPC](#install-a-client-on-hpc)
     - [Install a client on your WSL Laptop](#install-a-client-on-your-wsl-laptop)
     - [Verify installation](#verify-installation)
@@ -408,27 +410,30 @@ then you add the packages you need in the client to `startup/requirements.txt` :
 echo -e "torch \ntorchvision \ntensorboard" >> startup/requirements.txt
 ```
 
-and use the `start.sh` script or follow [these instructions to install the client on AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#deploy-fl-client-on-aws): 
+now you have the option of using an improved patched version of the AWS installer which allows you to skip many of the [additional configuration steps](#additional-configuration-steps) below. To use the patched version run these commands:
 
-```bash
-startup/start.sh --cloud aws     # this is only needed for full automation: --config my_config.txt
+```
+wget https://raw.githubusercontent.com/dirkpetersen/nvflare-cancer/main/aws_start.sh.patch
+patch startup/aws_start.sh < aws_start.sh.patch
 ```
 
-then you get asked 3 questions, and instead of the default AMI (Ubuntu 20.04) you pick the slightly newer image for Ubuntu 22.04 that has Python 3.10. There are 2 choices: 
-- ami-03c983f9003cb9cd1 is a plain image with 8GB disk size that is reasonable for testing without GPU. For this one you pick the `t2.small` instance type
-- ami-061debf863768593d is a AI/ML image with 64GB disk size that has the nvidia drivers pre-installed. For this one you pick a relatively low cost AWS instance with a T4 GPU, for example `g4dn.xlarge` . 
-  
+and then run the `startup/start.sh` script or follow [these instructions to install the client on AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#deploy-fl-client-on-aws): 
+
+```bash
+startup/start.sh --cloud aws     # you can get more automation by using: --config my_config.txt
+```
+
+Now you need to answer 3 questions, and instead of the default AMI (Ubuntu 20.04) you pick the slightly newer ami image `ami-03c983f9003cb9cd1` for Ubuntu 22.04 that has Python 3.10. If you use the patched version of the install script, this is already the default and you can just hit enter. If you need a GPU, you can pick a low cost instance with T4 GPU: `g4dn.xlarge`.  
 If you are running just a first test, it is fine to install the default and low cost t2.small instance.
 
 ```
-Cloud AMI image, press ENTER to accept default ami-04bad3c587fe60d89: ami-061debf863768593d
+Cloud AMI image, press ENTER to accept default ami-04bad3c587fe60d89: ami-03c983f9003cb9cd1
 Cloud EC2 type, press ENTER to accept default t2.small: g4dn.xlarge
 Cloud EC2 region, press ENTER to accept default us-west-2:
 region = us-west-2, ami image = ami-03c983f9003cb9cd1, EC2 type = g4dn.xlarge, OK? (Y/n) y
 If the client requires additional dependencies, please copy the requirements.txt to AWS-T4/startup/
 Press ENTER when it's done or no additional dependencies.
 ```
-
 
 The output should be similar to this :
 
@@ -452,6 +457,10 @@ Now try logging in :
 ```bash
 ssh -i NVFlareClientKeyPair.pem ubuntu@54.xxx.xxx.x
 ```
+
+#### additional configuration steps
+
+If you have used the patched version of the installer you can skip these steps below and go right to [upgrade all packages](#upgrade-all-packages)
 
 add a cronjob to ensure that the client will restart after a reboot
 
@@ -487,6 +496,8 @@ In case you forgot to add some packages to requirements.txt, that may be require
 python3 -m pip install --upgrade pandas numpy
 rm -rf ~/.cache/pip
 ```
+
+#### upgrade all packages
 
 As a last step, make sure the newest packages are installed and that a reboot works
 
