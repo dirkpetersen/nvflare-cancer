@@ -1,5 +1,5 @@
 --- startup/aws_start.sh	2024-06-06 17:39:40.000000000 -0700
-+++ startup/aws_start.sh	2024-06-06 17:53:59.577214503 -0700
++++ startup/aws_start.sh	2024-06-06 19:57:38.095215423 -0700
 @@ -87,7 +87,7 @@
    EC2_TYPE=t2.xlarge
    REGION=us-west-2
@@ -20,12 +20,17 @@
      prompt ans "region = ${REGION}, ami image = ${AMI_IMAGE}, EC2 type = ${EC2_TYPE}, OK? (Y/n) "
      if [[ $ans = "" ]] || [[ $ans =~ ^(y|Y)$ ]]
      then
-@@ -175,11 +175,14 @@
+@@ -175,11 +175,19 @@
  
  echo "Creating VM at region $REGION, may take a few minutes."
  
-+amidevice=$(aws ec2 describe-images --image-ids $AMI_IMAGE --query 'Images[0].BlockDeviceMappings[0].DeviceName' --output text)
-+bdmap='[{"DeviceName":"'${amidevice}'","Ebs":{"VolumeSize":16,"VolumeType":"gp2","DeleteOnTermination":true}}]'
++ ami_info=$(aws ec2 describe-images --image-ids $AMI_IMAGE --output json)
++ amidevice=$(echo $ami_info | jq -r '.Images[0].BlockDeviceMappings[0].DeviceName')
++ block_device_mappings=$(echo $ami_info | jq -r '.Images[0].BlockDeviceMappings')
++ original_size=$(echo $block_device_mappings | jq -r '.[0].Ebs.VolumeSize')
++ original_volume_type=$(echo $block_device_mappings | jq -r '.[0].Ebs.VolumeType')
++ new_size=$((original_size + 8))
++ bdmap='[{"DeviceName":"'${amidevice}'","Ebs":{"VolumeSize":'${new_size}',"VolumeType":"'${original_volume_type}'","DeleteOnTermination":true}}]'
 +
  if [ $using_default_vpc == true ]
  then
@@ -37,7 +42,7 @@
  fi
  report_status "$?" "creating VM"
  instance_id=$(jq -r .Instances[0].InstanceId vm_create.json)
-@@ -209,10 +212,16 @@
+@@ -209,10 +217,16 @@
  else
    echo "Installing packages in $VM_NAME, may take a few minutes."
    ssh -f -i $KEY_FILE -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${DEST_SITE} \
@@ -53,7 +58,7 @@
    touch ${DEST_FOLDER}/startup/requirements.txt && \
 -  python3 -m pip install -r ${DEST_FOLDER}/startup/requirements.txt && \
 +  python3 -m pip install --break-system-packages --no-cache-dir -r ${DEST_FOLDER}/startup/requirements.txt && \
-+  (crontab -l 2>/dev/null; echo '@reboot  /var/tmp/cloud/startup/start.sh >> /var/tmp/nvflare-start.log 2>&1') | crontab && \
++  (crontab -l 2>/dev/null; echo '@reboot  /var/tmp/cloud/startup/start.sh >> /var/tmp/nvflare-client-start.log 2>&1') | crontab && \
    nohup ${DEST_FOLDER}/startup/start.sh && sleep 20 && \
    exit" > /tmp/nvflare.log 2>&1 
  
