@@ -468,6 +468,12 @@ Now try logging in :
 ssh -i NVFlareClientKeyPair.pem ubuntu@54.xxx.xxx.x
 ```
 
+or wait until the install has finished, you can check progress in /tmp/nvflare.log on your machine:
+
+```bash
+tail -f /tmp/nvflare.log
+```
+
 #### additional configuration steps
 
 If you have used the patched version of the installer you can skip these steps below and go right to [upgrade all packages](#upgrade-all-packages)
