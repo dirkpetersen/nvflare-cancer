@@ -497,7 +497,7 @@ If you have picked the plain image without NVidia drivers and software, make sur
 
 ```bash
 sudo apt update
-sudo DEBIAN_FRONTEND=noninteractive apt install -y nvidia-driver-535 nvidia-utils-535
+sudo DEBIAN_FRONTEND=noninteractive apt install -y nvidia-driver-535-server
 ```
 
 In case you forgot to add some packages to requirements.txt, that may be required by other NVFlare examples, you add them an and finally you should delete your pip cache (this can save gigabytes of disk space)
