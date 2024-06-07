@@ -49,7 +49,7 @@
    touch ${DEST_FOLDER}/startup/requirements.txt && \
 -  python3 -m pip install -r ${DEST_FOLDER}/startup/requirements.txt && \
 +  python3 -m pip install --break-system-packages --no-cache-dir -r ${DEST_FOLDER}/startup/requirements.txt && \
-+  (crontab -l 2>/dev/null; echo '@reboot  /var/tmp/cloud/startup/start.sh >> /var/tmp/nvflare-client-start.log 2>&1') | crontab && \
++  (crontab -l 2>/dev/null; echo '@reboot  /var/tmp/cloud/startup/start.sh >> /var/tmp/nvflare-start.log 2>&1') | crontab && \
    nohup ${DEST_FOLDER}/startup/start.sh && sleep 20 && \
    exit" > /tmp/nvflare.log 2>&1 
  
