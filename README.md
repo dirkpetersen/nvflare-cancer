@@ -412,12 +412,22 @@ echo -e "torch \ntorchvision \ntensorboard" >> startup/requirements.txt
 
 now you have the option of using an improved patched version of the AWS installer which allows you to skip many of the [additional configuration steps](#additional-configuration-steps) below. To use the patched version run these commands:
 
-```
+
+for clients create after June 5th 2024 use these 2 commands 
+
+```bash
 wget https://raw.githubusercontent.com/dirkpetersen/nvflare-cancer/main/aws_start.sh.patch
 patch startup/aws_start.sh < aws_start.sh.patch
 ```
 
-and then run the `startup/start.sh` script or follow [these instructions to install the client on AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#deploy-fl-client-on-aws): 
+and for clients that were created before June 5th 2024 use these ones 
+
+```bash
+wget https://raw.githubusercontent.com/dirkpetersen/nvflare-cancer/main/aws_start.sh.2.4.0.patch
+patch startup/aws_start.sh < aws_start.sh.2.4.0.patch
+```
+
+After this, run the `startup/start.sh` script or follow [these instructions to install the client on AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#deploy-fl-client-on-aws): 
 
 ```bash
 startup/start.sh --cloud aws     # you can get more automation by using: --config my_config.txt
