@@ -110,4 +110,4 @@
  echo "security group: ${SECURITY_GROUP}"
  echo "key pair: ${KEY_PAIR}"
 +echo "login: ssh -i ${KEY_PAIR}.pem ubuntu@${IP_ADDRESS}"
-
++
