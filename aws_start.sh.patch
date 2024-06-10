@@ -1,5 +1,5 @@
 --- startup/aws_start.sh	2024-06-06 17:39:40.000000000 -0700
-+++ ../AWS-T4.test/startup/aws_start.sh	2024-06-10 14:17:03.576363358 -0700
++++ ../AWS-T4.x/startup/aws_start.sh	2024-06-10 15:01:18.277215490 -0700
 @@ -59,6 +59,7 @@
  DEST_FOLDER=/var/tmp/cloud
  KEY_PAIR=NVFlareClientKeyPair
@@ -41,7 +41,7 @@
  else
 -  AMI_IMAGE=ami-04bad3c587fe60d89
 +  AMI_IMAGE=ami-03c983f9003cb9cd1  # 22.04  20.04:ami-04bad3c587fe60d89 24.04:ami-0406d1fdd021121cd
-+  AMI_NAME="ubuntu-jammy-22.04-amd64-pro-server"
++  AMI_NAME="ubuntu-*-22.04-amd64-pro-server"
    EC2_TYPE=t2.small
 -  REGION=us-west-2
  fi
@@ -52,7 +52,7 @@
      useDefault=true
  else
      useDefault=false
-@@ -101,34 +100,32 @@
+@@ -101,34 +100,36 @@
      report_status "$?" "Loading config file"
  fi
  
@@ -65,13 +65,17 @@
 -    prompt REGIION "Cloud EC2 region, press ENTER to accept default ${REGION}: "
 +if [ $useDefault = true ]; then 
 +  while true; do
-+    read -e -p "Cloud EC2 region, press ENTER to accept default \"${REGION}\": " REGION 
-+    read -e -p "Cloud AMI image name, press ENTER to accept default \"${AMI_NAME}\": " AMI_NAME
++    read -e -i ${REGION} -p "Cloud EC2 region, press ENTER to accept default: " REGION 
++    read -e -i ${AMI_NAME} -p "Cloud AMI image name, press ENTER to accept default: " AMI_NAME
 +    echo "    retrieving AMI ID for ${AMI_NAME}..." 
 +    IMAGES=$(aws ec2 describe-images --region ${REGION} --owners ${IMAGE_OWNER} --filters "Name=name,Values=*${AMI_NAME}*" --output json)
++    if [ "${#IMAGES}" -lt 30 ]; then
++      echo -e "No images found, starting over\n"
++      continue
++    fi
 +    AMI_IMAGE=$(echo $IMAGES | jq -r '.Images | sort_by(.CreationDate) | last(.[]).ImageId')
-+    prompt AMI_IMAGE "Cloud AMI image id, press ENTER to accept default \"${AMI_IMAGE}\": "
-+    prompt EC2_TYPE "Cloud EC2 type, use g4dn.xlarge for GPU or press ENTER to accept default \"${EC2_TYPE}\": "
++    read -e -i ${AMI_IMAGE} -p "Cloud AMI image id, press ENTER to accept default: " AMI_IMAGE
++    read -e -i ${EC2_TYPE} -p "Cloud EC2 type, use g4dn.xlarge for GPU or press ENTER to accept default: " EC2_TYPE
      prompt ans "region = ${REGION}, ami image = ${AMI_IMAGE}, EC2 type = ${EC2_TYPE}, OK? (Y/n) "
 -    if [[ $ans = "" ]] || [[ $ans =~ ^(y|Y)$ ]]
 -    then
@@ -100,7 +104,7 @@
      echo "No default VPC found.  Please create one before running this script with the following command."
      echo "aws ec2 create-default-vpc"
      echo "or specify your own vpc and subnet with --vpc-id and --subnet-id"
-@@ -146,28 +143,26 @@
+@@ -146,28 +147,26 @@
  
  echo "Generating key pair for VM"
  
@@ -137,7 +141,7 @@
  fi
  report_status "$?" "creating security group rules"
  
-@@ -175,17 +170,24 @@
+@@ -175,17 +174,24 @@
  
  echo "Creating VM at region $REGION, may take a few minutes."
  
@@ -168,7 +172,7 @@
  
  IP_ADDRESS=$(jq -r .Reservations[0].Instances[0].PublicIpAddress vm_result.json)
  
-@@ -198,8 +200,7 @@
+@@ -198,8 +204,7 @@
  scp -q -i $KEY_FILE -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $PWD $DEST
  report_status "$?" "copying startup kits to VM"
  
@@ -178,7 +182,7 @@
    echo "Launching container with docker option ${DOCKER_OPTION}."
    ssh -f -i $KEY_FILE -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${DEST_SITE} \
    "docker run -d -v ${DEST_FOLDER}:${DEST_FOLDER} --network host ${DOCKER_OPTION} ${image_name} \
-@@ -209,10 +210,16 @@
+@@ -209,10 +214,16 @@
  else
    echo "Installing packages in $VM_NAME, may take a few minutes."
    ssh -f -i $KEY_FILE -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${DEST_SITE} \
@@ -198,9 +202,11 @@
    nohup ${DEST_FOLDER}/startup/start.sh && sleep 20 && \
    exit" > /tmp/nvflare.log 2>&1 
  
-@@ -225,3 +232,5 @@
+@@ -225,3 +236,7 @@
  echo "Other resources provisioned"
  echo "security group: ${SECURITY_GROUP}"
  echo "key pair: ${KEY_PAIR}"
++echo "review install progress:"
++echo "  tail -f /tmp/nvflare.log"
 +echo "login to instance:"
 +echo "  ssh -i ${KEY_FILE} ubuntu@${IP_ADDRESS}"
