@@ -1,18 +1,67 @@
---- startup/aws_start.sh	2024-06-06 17:39:40.000000000 -0700
-+++ ../AWS-T4.x/startup/aws_start.sh	2024-06-10 15:01:18.277215490 -0700
-@@ -59,6 +59,7 @@
+--- startup/aws_start.sh	2024-06-11 00:28:20.565500271 -0700
++++ startup/aws_start.sh	2024-06-11 00:32:41.155649058 -0700
+@@ -30,6 +30,44 @@
+   fi
+ }
+ 
++get_resources_file() {
++  local rfile="${DIR}/../local/resources.json"
++  local dfile="${DIR}/../local/resources.json.default"
++  if [ -f "${rfile}" ]; then
++    echo "${rfile}"
++  elif [ -f "${dfile}" ]; then
++    echo "${dfile}"
++  else
++    echo ""
++    exit 1
++  fi
++}
++
++find_ec2_gpu_instance_type() {
++  local gpucnt=0
++  local gpumem=0
++  if rfile=$(get_resources_file); then
++    # Parse the number of GPUs and memory per GPU from the resource_manager component in local/resources.json
++    gpucnt=$(jq -r '.components[] | select(.id == "resource_manager") | .args.num_of_gpus' "${rfile}")
++    if [ ${gpucnt} -gt 0 ]; then
++      gpumem=$(jq -r '.components[] | select(.id == "resource_manager") | .args.mem_per_gpu_in_GiB' "${rfile}")
++      if [ ${gpumem} -gt 0 ]; then
++        gpumem=$(( ${gpumem}*1024 ))
++        printf "    finding smallest instance type with $gpucnt GPUs and $gpumem VRAM ... "
++        gpu_types=$(aws ec2 describe-instance-types --region ${REGION} --query 'InstanceTypes[?GpuInfo.Gpus[?Manufacturer==`NVIDIA`]].{InstanceType: InstanceType, GPU: GpuInfo.Gpus[*].{Name: Name, GpuMemoryMiB: MemoryInfo.SizeInMiB, GpuCount: Count}, Architecture: ProcessorInfo.SupportedArchitectures, VCpuCount: VCpuInfo.DefaultVCpus, MemoryMiB: MemoryInfo.SizeInMiB}' --output json)
++        filtered_gpu_types=$(echo ${gpu_types} | jq "[.[] | select(.GPU | any(.GpuCount == ${gpucnt} and .GpuMemoryMiB >= ${gpumem})) | select(.Architecture | index(\"${ARCH}\"))]")
++        smallest_gpu_type=$(echo ${filtered_gpu_types} | jq -r 'min_by(.VCpuCount).InstanceType')        
++        if [ ${smallest_gpu_type} = null ]; then
++          echo "failed finding a GPU instance, EC2_TYPE unchanged."
++        else
++          echo "${smallest_gpu_type}"
++          EC2_TYPE=${smallest_gpu_type}
++        fi
++      fi
++    fi
++  fi
++}
++
+ # parse arguments
+ while [[ $# -gt 0 ]]
+ do
+@@ -58,7 +96,9 @@
+ SECURITY_GROUP=nvflare_client_sg_$RANDOM
  DEST_FOLDER=/var/tmp/cloud
  KEY_PAIR=NVFlareClientKeyPair
- KEY_FILE=${KEY_PAIR}.pem
+-KEY_FILE=${KEY_PAIR}.pem
++KEY_FILE=$(pwd)/${KEY_PAIR}.pem
++ARCH=x86_64
 +IMAGE_OWNER="099720109477" # Owner account id=Amazon
  
  echo "This script requires aws (AWS CLI), sshpass, dig and jq.  Now checking if they are installed."
  
-@@ -66,34 +67,32 @@
+@@ -66,34 +106,39 @@
  check_binary sshpass "Please install it first."
  check_binary dig "Please install it first."
  check_binary jq "Please install it first."
-+echo -e "Note: run this command, if you would like to use a different AWS profile: export AWS_PROFILE=your-profile-name.\n"
++echo "Note: run this command first for a different AWS profile:"
++echo -e "  export AWS_PROFILE=your-profile-name.\n"
  
 -if [ -z ${vpc_id+x} ]
 -then
@@ -32,6 +81,12 @@
  
 -if [ $container = true ]
 -then
++aws_identity=$(aws sts get-caller-identity)
++if [[ $? -ne 0 ]]; then
++  echo ""
++  exit 1
++fi
++
 +REGION=$(aws configure get region 2>/dev/null)                                                                                                                        : "${REGION:=us-west-2}"                                                                                                                                              : "${AWS_DEFAULT_REGION:=$REGION}"                                                                                                                                    : "${AWS_REGION:=$AWS_DEFAULT_REGION}"                                                                                                                              MYREGION=${AWS_REGION}
 +
 +if [ $container = true ]; then 
@@ -40,7 +95,7 @@
 -  REGION=us-west-2
  else
 -  AMI_IMAGE=ami-04bad3c587fe60d89
-+  AMI_IMAGE=ami-03c983f9003cb9cd1  # 22.04  20.04:ami-04bad3c587fe60d89 24.04:ami-0406d1fdd021121cd
++  AMI_IMAGE=ami-01ed44191042f130f  # 22.04  20.04:ami-063da375c17d500ab 24.04:ami-0833a2b4abf788b34
 +  AMI_NAME="ubuntu-*-22.04-amd64-pro-server"
    EC2_TYPE=t2.small
 -  REGION=us-west-2
@@ -52,7 +107,7 @@
      useDefault=true
  else
      useDefault=false
-@@ -101,34 +100,36 @@
+@@ -101,34 +146,44 @@
      report_status "$?" "Loading config file"
  fi
  
@@ -63,10 +118,12 @@
 -    prompt AMI_IMAGE "Cloud AMI image, press ENTER to accept default ${AMI_IMAGE}: "
 -    prompt EC2_TYPE "Cloud EC2 type, press ENTER to accept default ${EC2_TYPE}: "
 -    prompt REGIION "Cloud EC2 region, press ENTER to accept default ${REGION}: "
++
++
 +if [ $useDefault = true ]; then 
 +  while true; do
 +    read -e -i ${REGION} -p "Cloud EC2 region, press ENTER to accept default: " REGION 
-+    read -e -i ${AMI_NAME} -p "Cloud AMI image name, press ENTER to accept default: " AMI_NAME
++    read -e -i ${AMI_NAME} -p "Cloud AMI image name, press ENTER to accept default (use amd64 or arm64): " AMI_NAME
 +    echo "    retrieving AMI ID for ${AMI_NAME}..." 
 +    IMAGES=$(aws ec2 describe-images --region ${REGION} --owners ${IMAGE_OWNER} --filters "Name=name,Values=*${AMI_NAME}*" --output json)
 +    if [ "${#IMAGES}" -lt 30 ]; then
@@ -75,7 +132,13 @@
 +    fi
 +    AMI_IMAGE=$(echo $IMAGES | jq -r '.Images | sort_by(.CreationDate) | last(.[]).ImageId')
 +    read -e -i ${AMI_IMAGE} -p "Cloud AMI image id, press ENTER to accept default: " AMI_IMAGE
-+    read -e -i ${EC2_TYPE} -p "Cloud EC2 type, use g4dn.xlarge for GPU or press ENTER to accept default: " EC2_TYPE
++    if [[ "$AMI_NAME" == *"arm64"* ]]; then
++      ARCH="arm64"
++    fi
++    if [ ${container} = false ]; then
++      find_ec2_gpu_instance_type
++    fi
++    read -e -i ${EC2_TYPE} -p "Cloud EC2 type, press ENTER to accept default: " EC2_TYPE
      prompt ans "region = ${REGION}, ami image = ${AMI_IMAGE}, EC2 type = ${EC2_TYPE}, OK? (Y/n) "
 -    if [[ $ans = "" ]] || [[ $ans =~ ^(y|Y)$ ]]
 -    then
@@ -104,7 +167,7 @@
      echo "No default VPC found.  Please create one before running this script with the following command."
      echo "aws ec2 create-default-vpc"
      echo "or specify your own vpc and subnet with --vpc-id and --subnet-id"
-@@ -146,28 +147,26 @@
+@@ -146,46 +201,51 @@
  
  echo "Generating key pair for VM"
  
@@ -141,9 +204,10 @@
  fi
  report_status "$?" "creating security group rules"
  
-@@ -175,17 +174,24 @@
+ # Start provisioning
  
- echo "Creating VM at region $REGION, may take a few minutes."
+-echo "Creating VM at region $REGION, may take a few minutes."
++echo "Creating VM at region $REGION, this may take a few minutes ... "
  
 -if [ $using_default_vpc == true ]
 -then
@@ -172,9 +236,12 @@
  
  IP_ADDRESS=$(jq -r .Reservations[0].Instances[0].PublicIpAddress vm_result.json)
  
-@@ -198,8 +204,7 @@
+@@ -197,9 +257,10 @@
+ echo "Destination folder is ${DEST}"
  scp -q -i $KEY_FILE -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $PWD $DEST
  report_status "$?" "copying startup kits to VM"
++echo "login to instance:"
++echo "  ssh -i ${KEY_FILE} ubuntu@${IP_ADDRESS}"
  
 -if [ $container = true ]
 -then
@@ -182,16 +249,23 @@
    echo "Launching container with docker option ${DOCKER_OPTION}."
    ssh -f -i $KEY_FILE -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${DEST_SITE} \
    "docker run -d -v ${DEST_FOLDER}:${DEST_FOLDER} --network host ${DOCKER_OPTION} ${image_name} \
-@@ -209,10 +214,16 @@
+@@ -207,15 +268,24 @@
+   -s fed_client.json --set uid=AWS-T4 secure_train=true config_folder=config org=Test \" " > /tmp/nvflare.log 2>&1 
+   report_status "$?" "launching container"
  else
-   echo "Installing packages in $VM_NAME, may take a few minutes."
+-  echo "Installing packages in $VM_NAME, may take a few minutes."
++  echo "Installing os packages with apt in $VM_NAME, this may take a few minutes ... "
++  ssh -i $KEY_FILE -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${DEST_SITE} \
++  " sudo apt update && \
++  sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc python3-dev && \
++  if lspci | grep -i nvidia; then sudo DEBIAN_FRONTEND=noninteractive apt install -y nvidia-driver-535-server; fi && \
++  if lspci | grep -i nvidia; then sudo modprobe nvidia; fi && sleep 10 && \
++  exit" > /tmp/nvflare.log 2>&1
++  echo "Installing user space packages in $VM_NAME, this may take a few minutes ... "
    ssh -f -i $KEY_FILE -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${DEST_SITE} \
 -  "pwd && wget -q https://bootstrap.pypa.io/get-pip.py && \
 -  python3 get-pip.py && python3 -m pip install nvflare && \
-+  " sudo apt update && \
-+  if lspci | grep -i nvidia; then sudo DEBIAN_FRONTEND=noninteractive apt install -y nvidia-driver-535-server; fi && \
-+  if lspci | grep -i nvidia; then sudo modprobe nvidia; fi && \
-+  echo 'export PATH=~/.local/bin:\$PATH' >> ~/.bashrc && \
++  " echo 'export PATH=~/.local/bin:\$PATH' >> ~/.bashrc && \
 +  export PATH=/home/ubuntu/.local/bin:\$PATH && \
 +  pwd && wget -q https://bootstrap.pypa.io/get-pip.py && \
 +  python3 get-pip.py --break-system-packages && python3 -m pip install --break-system-packages nvflare && \
@@ -200,9 +274,13 @@
 +  python3 -m pip install --break-system-packages --no-cache-dir -r ${DEST_FOLDER}/startup/requirements.txt && \
 +  (crontab -l 2>/dev/null; echo '@reboot  /var/tmp/cloud/startup/start.sh >> /var/tmp/nvflare-client-start.log 2>&1') | crontab && \
    nohup ${DEST_FOLDER}/startup/start.sh && sleep 20 && \
-   exit" > /tmp/nvflare.log 2>&1 
+-  exit" > /tmp/nvflare.log 2>&1 
+-
++  exit" >> /tmp/nvflare.log 2>&1 
+   report_status "$?" "installing packages"
+ fi
  
-@@ -225,3 +236,7 @@
+@@ -225,3 +295,7 @@
  echo "Other resources provisioned"
  echo "security group: ${SECURITY_GROUP}"
  echo "key pair: ${KEY_PAIR}"
