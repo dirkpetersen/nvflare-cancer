@@ -423,39 +423,53 @@ After this, run the `startup/start.sh` script or follow [these instructions to i
 startup/start.sh --cloud aws     # you can get more automation by using: --config my_config.txt
 ```
 
-Now you need to answer 3 questions, and instead of the default AMI (Ubuntu 20.04) you pick the slightly newer ami image `ami-03c983f9003cb9cd1` for Ubuntu 22.04 that has Python 3.10. If you use the patched version of the install script, this is already the default and you can just hit enter. If you need a GPU, you can pick a low cost instance with T4 GPU: `g4dn.xlarge`.  
-If you are running just a first test, it is fine to install the default and low cost t2.small instance.
+**Below we assume you use the patched version**
+
+Now you need to confirm or change a few default settings. After confirming your AWS region you can edit the AMI image name (which supports wildcards *), that is used to search AWS for an AMI image ID for your specific AWS region. Our default here is Ubuntu 22.04 as it has the latest supported Python version (3.10). You can also change amd64 to arm64 as ARM based instances are sometimes lower cost. 
+If you are running just a first test, it is fine to not use a GPU machine and instead pick the low cost t2.small instance.
 
 ```
-Cloud AMI image, press ENTER to accept default ami-04bad3c587fe60d89: ami-03c983f9003cb9cd1
-Cloud EC2 type, press ENTER to accept default t2.small: g4dn.xlarge
-Cloud EC2 region, press ENTER to accept default us-west-2:
-region = us-west-2, ami image = ami-03c983f9003cb9cd1, EC2 type = g4dn.xlarge, OK? (Y/n) y
-If the client requires additional dependencies, please copy the requirements.txt to AWS-T4/startup/
+Cloud EC2 region, press ENTER to accept default: us-west-2
+Cloud AMI image name, press ENTER to accept default (use amd64 or arm64): ubuntu-*-22.04-amd64-pro-server
+    retrieving AMI ID for ubuntu-*-22.04-amd64-pro-server...
+Cloud AMI image id, press ENTER to accept default: ami-01ed44191042f130f
+    finding smallest instance type with 1 GPUs and 15360 VRAM ... g4dn.xlarge
+Cloud EC2 type, press ENTER to accept default: g4dn.xlarge
+region = us-west-2, ami image = ami-01ed44191042f130f, EC2 type = g4dn.xlarge, OK? (Y/n)
+If the client requires additional dependencies, please copy the requirements.txt to /home/dp/NVFlare/dirk/Test/AWS-T4.X/startup.
 Press ENTER when it's done or no additional dependencies.
 ```
 
 The output should be similar to this :
 
 ```
+Checking if default VPC exists
+Default VPC found
 Generating key pair for VM
-Creating VM at region us-west-2, may take a few minutes.
-VM created with IP address: 54.xxx.xxx.x
+Creating VM at region us-west-2, this may take a few minutes ...
+VM created with IP address: xx.xxx.xxx.203
 Copying files to nvflare_client
-Destination folder is ubuntu@54.xxx.xxx.x:/var/tmp/cloud
-Installing packages in nvflare_client, may take a few minutes.
+Destination folder is ubuntu@xx.xxx.xxx.203:/var/tmp/cloud
+login to instance:
+  ssh -i /home/dp/NVFlare/NVFlareClientKeyPair.pem ubuntu@xx.xxx.xxx.203
+Installing os packages with apt in nvflare_client, this may take a few minutes ...
+Installing user space packages in nvflare_client, this may take a few minutes ...
 System was provisioned
-To terminate the EC2 instance, run the following command.
-aws ec2 terminate-instances --instance-ids i-0673318fd1ed204f0
+To terminate the EC2 instance, run the following command:
+  aws ec2 terminate-instances --instance-ids i-0dbbd2fb9a37c6783
 Other resources provisioned
-security group: nvflare_client_sg_20293
+security group: nvflare_client_sg_5254
 key pair: NVFlareClientKeyPair
+review install progress:
+  tail -f /tmp/nvflare.log
+login to instance:
+  ssh -i /home/dp/NVFlare/NVFlareClientKeyPair.pem ubuntu@xx.xxx.xxx.203
 ```
 
 Now try logging in :
 
 ```bash
-ssh -i NVFlareClientKeyPair.pem ubuntu@54.xxx.xxx.x
+ssh -i /home/dp/NVFlare/NVFlareClientKeyPair.pem ubuntu@xx.xxx.xxx.203
 ```
 
 or wait until the install has finished, you can check progress in /tmp/nvflare.log on your machine:
