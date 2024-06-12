@@ -429,14 +429,17 @@ Now you need to confirm or change a few default settings. After confirming your 
 If you are running just a first test, it is fine to not use a GPU machine and instead pick the low cost t2.small instance.
 
 ```
-Cloud EC2 region, press ENTER to accept default: us-west-2
-Cloud AMI image name, press ENTER to accept default (use amd64 or arm64): ubuntu-*-22.04-amd64-pro-server
-    retrieving AMI ID for ubuntu-*-22.04-amd64-pro-server...
-Cloud AMI image id, press ENTER to accept default: ami-01ed44191042f130f
-    finding smallest instance type with 1 GPUs and 15360 VRAM ... g4dn.xlarge
-Cloud EC2 type, press ENTER to accept default: g4dn.xlarge
-region = us-west-2, ami image = ami-01ed44191042f130f, EC2 type = g4dn.xlarge, OK? (Y/n)
-If the client requires additional dependencies, please copy the requirements.txt to /home/dp/NVFlare/dirk/Test/AWS-T4.X/startup.
+Note: run this command first for a different AWS profile:
+  export AWS_PROFILE=your-profile-name.
+
+* Cloud EC2 region, press ENTER to accept default: us-west-2
+* Cloud AMI image name, press ENTER to accept default (use amd64 or arm64): ubuntu-*-22.04-arm64-pro-server
+    retrieving AMI ID for ubuntu-*-22.04-arm64-pro-server...
+    finding smallest instance type with 1 GPUs and 15360 MiB VRAM ... g5g.xlarge
+* Cloud EC2 type, press ENTER to accept default: g5g.xlarge
+* Cloud AMI image id, press ENTER to accept default: ami-0d0b0cfbf4ce38093
+region = us-west-2, EC2 type = g5g.xlarge, ami image = ami-0d0b0cfbf4ce38093 , OK? (Y/n)
+If the client requires additional Python packages, please add them to /home/dp/NVFlare/dirk/Test/AWS-T4.X/startup/requirements.txt !
 Press ENTER when it's done or no additional dependencies.
 ```
 
@@ -450,8 +453,6 @@ Creating VM at region us-west-2, this may take a few minutes ...
 VM created with IP address: xx.xxx.xxx.203
 Copying files to nvflare_client
 Destination folder is ubuntu@xx.xxx.xxx.203:/var/tmp/cloud
-login to instance:
-  ssh -i /home/dp/NVFlare/NVFlareClientKeyPair.pem ubuntu@xx.xxx.xxx.203
 Installing os packages with apt in nvflare_client, this may take a few minutes ...
 Installing user space packages in nvflare_client, this may take a few minutes ...
 System was provisioned
@@ -463,7 +464,7 @@ key pair: NVFlareClientKeyPair
 review install progress:
   tail -f /tmp/nvflare.log
 login to instance:
-  ssh -i /home/dp/NVFlare/NVFlareClientKeyPair.pem ubuntu@xx.xxx.xxx.203
+  ssh -i /home/dp/NVFlare/NVFlareClientKeyPair_i-0dbbd2fb9a37c6783.pem ubuntu@xx.xxx.xxx.203
 ```
 
 Now try logging in :
