@@ -189,10 +189,10 @@ fi
 # Check if default VPC exists
 if [ $using_default_vpc == true ]; then 
   echo "Checking if default VPC exists"
-  found_default_vpc=$(aws ec2 describe-vpcs | jq '.Vpcs[] | select(.IsDefault == true)')
+  found_default_vpc=$(aws ec2 describe-vpcs --region ${REGION} | jq '.Vpcs[] | select(.IsDefault == true)')
   if [ -z "${found_default_vpc}" ]; then
     echo "No default VPC found.  Please create one before running this script with the following command."
-    echo "aws ec2 create-default-vpc"
+    echo "aws ec2 create-default-vpc --region ${REGION}"
     echo "or specify your own vpc and subnet with --vpc-id and --subnet-id"
     exit
   else
