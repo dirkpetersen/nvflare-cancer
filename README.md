@@ -26,6 +26,7 @@ The central NVFlare dashboard and server was installed by the `Project Admin`, t
       - [Pytorch poc mode](#pytorch-poc-mode)
     - [Troubleshooting](#troubleshooting)
       - [missing server dependencies](#missing-server-dependencies)
+      - [No default VPC](#no-default-vpc)
       - [SSL issue](#ssl-issue)
   - [Using NVFlare as an Org Admin](#using-nvflare-as-an-org-admin)
     - [Register client sites](#register-client-sites)
@@ -48,7 +49,7 @@ The central NVFlare dashboard and server was installed by the `Project Admin`, t
     - [Resetting Dashboard](#resetting-dashboard)
   - [Installing Server](#installing-server)
   - [Installing Client](#installing-client)
-
+- [Contributing code to NVFlare](#contributing-code-to-nvflare)
 
 # Installing NVFlare deploy environment 
 
@@ -346,6 +347,10 @@ options:
 
 If you get an `Error 113` in the server log, this might mean that a dependency on the server is missing. For example, the NVFlare hello-pt example does not only require Pytorch on the clients but also on the server. To confirm the root cause, use the FLARE console (admin CLI) to login, and execute command download_job [job-id] to get the entire workspace folder. You will find it in the transfer folder of the console. Please check the workspace/log.txt inside the job folder for more details.
 
+#### No default VPC
+
+If you receive a VPC error such as (`VPCIdNotSpecified`) it means that no default network configuration ([Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html)) has been created by your AWS administrator. Default VPCs are often used in smaller test envionments. You can create a default VPC by using this command: `aws ec2 create-default-vpc --region us-west-2` . If that fails you may not have permission to create this and have to reach out to your AWS Administrator for a solution. In NVFlare versions >= 2.4.1 you are given an option to pick your own --vpc-id and --subnet-id.
+
 #### SSL issue 
 
 You may get this SSL error in log.txt with some versions of Python and Red Hat linux
@@ -410,11 +415,10 @@ then you add the packages you need in the client to `startup/requirements.txt` :
 echo -e "torch \ntorchvision \ntensorboard" >> startup/requirements.txt
 ```
 
-now you have the option of using an improved patched version of the AWS installer which allows you to skip many of the [additional configuration steps](#additional-configuration-steps) below. To use the patched version run these commands:
+now you have the option of using an improved patched version of the AWS installer which allows you to skip many of the [additional configuration steps](#additional-configuration-steps) below. To use the patched version simply run this command to download and replace the existing aws_start.sh script:
 
 ```bash
-wget https://raw.githubusercontent.com/dirkpetersen/nvflare-cancer/main/aws_start.sh.patch -O aws_start.sh.patch
-patch startup/aws_start.sh < aws_start.sh.patch
+wget https://raw.githubusercontent.com/dirkpetersen/nvflare-cancer/main/aws_start.sh -O startup/aws_start.sh
 ```
 
 After this, run the `startup/start.sh` script or follow [these instructions to install the client on AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#deploy-fl-client-on-aws): 
@@ -422,6 +426,8 @@ After this, run the `startup/start.sh` script or follow [these instructions to i
 ```bash
 startup/start.sh --cloud aws     # you can get more automation by using: --config my_config.txt
 ```
+
+**Note**: If you receive a VPC error such as (`VPCIdNotSpecified`), you may be able to mitigate the issue by using this command: `aws ec2 create-default-vpc --region us-west-2`. You can find more details in the troubleshooting section under [No default VPC](#no-default-vpc)
 
 **Below we assume you use the patched version**
 
@@ -434,8 +440,8 @@ Note: run this command first for a different AWS profile:
 
 * Cloud EC2 region, press ENTER to accept default: us-west-2
 * Cloud AMI image name, press ENTER to accept default (use amd64 or arm64): ubuntu-*-22.04-arm64-pro-server
-    retrieving AMI ID for ubuntu-*-22.04-arm64-pro-server...
-    finding smallest instance type with 1 GPUs and 15360 MiB VRAM ... g5g.xlarge
+    retrieving AMI ID for ubuntu-*-22.04-arm64-pro-server ... ami-0d0b0cfbf4ce38093 found
+    finding smallest instance type with 1 GPUs and 15360 MiB VRAM ... g5g.xlarge found
 * Cloud EC2 type, press ENTER to accept default: g5g.xlarge
 * Cloud AMI image id, press ENTER to accept default: ami-0d0b0cfbf4ce38093
 region = us-west-2, EC2 type = g5g.xlarge, ami image = ami-0d0b0cfbf4ce38093 , OK? (Y/n)
@@ -457,12 +463,12 @@ Installing os packages with apt in nvflare_client, this may take a few minutes .
 Installing user space packages in nvflare_client, this may take a few minutes ...
 System was provisioned
 To terminate the EC2 instance, run the following command:
-  aws ec2 terminate-instances --instance-ids i-0dbbd2fb9a37c6783
+  aws ec2 terminate-instances --region us-west-2 --instance-ids i-0dbbd2fb9a37c6783
 Other resources provisioned
 security group: nvflare_client_sg_5254
 key pair: NVFlareClientKeyPair
 review install progress:
-  tail -f /tmp/nvflare.log
+  tail -f /tmp/nvflare-aws-YGR.log
 login to instance:
   ssh -i /home/dp/NVFlare/NVFlareClientKeyPair_i-0dbbd2fb9a37c6783.pem ubuntu@xx.xxx.xxx.203
 ```
@@ -470,13 +476,13 @@ login to instance:
 Now try logging in :
 
 ```bash
-ssh -i /home/dp/NVFlare/NVFlareClientKeyPair.pem ubuntu@xx.xxx.xxx.203
+ssh -i /home/dp/NVFlare/NVFlareClientKeyPair_i-0dbbd2fb9a37c6783.pem ubuntu@xx.xxx.xxx.203
 ```
 
-or wait until the install has finished, you can check progress in /tmp/nvflare.log on your machine:
+or wait until the install has finished, you can check progress in /tmp/nvflare-aws-YGR.log on your machine:
 
 ```bash
-tail -f /tmp/nvflare.log
+tail -f /tmp/nvflare-aws-YGR.log
 ```
 
 #### additional configuration steps
@@ -695,7 +701,7 @@ The NVFlare dashboard will be created in an isolated AWS account. Please see the
 nvflare dashboard --cloud aws
 ```
 
-If you receive a VPC error such as (`VPCIdNotSpecified`) it means that no default network configuration ([Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html)) has been created by your AWS administrator. Default VPCs are often used in smaller test envionments. You can create a default VPC by using this command: `aws ec2 create-default-vpc` . If that fails you may not have permission to create this and have to reach out to your AWS Administrator for a solution. In NVFlare versions > 2.4 you will also be able to pick your own VPC. 
+**Note**: If you receive a VPC error such as (`VPCIdNotSpecified`), you may be able to mitigate the issue by using this command: `aws ec2 create-default-vpc --region us-west-2`. You can find more details in the troubleshooting section under [No default VPC](#no-default-vpc)
 
 After the dashboard is started you will see a dashboard URL that includes an IP address and looks like `http://xxx.xxx.xxx.xxx:443`. Make sure you record the email address and the 5 digit initial password that is displayed in the terminal. Verify that you can login with email address as the user and the password at that URL. You can change your password at `MY INFO -> Edit My Profile`
 
@@ -950,3 +956,55 @@ sudo reboot
 ## Installing Client
 
 please see [Using NVFlare as an Org Admin](#using-nvflare-as-an-org-admin)
+
+# Contributing code to NVFlare 
+
+If you would like to make a code contribution to NVFlare, please check the [contributor docs](https://nvflare.readthedocs.io/en/main/contributing.html) first. 
+In our case, we have made modificaitons to the cloud deployment scripts and constributed some changes back. Please take these steps after [creating a Fork](https://github.com/NVIDIA/NVFlare/fork) of NVFlare: 
+
+```
+git clone git@github.com:your-organization/NVFlare.git
+git clone git@github.com:dirkpetersen/nvflare-cancer.git
+cd NVFlare
+```
+
+check folder `nvflare\lighter\impl` and make modifications to `aws_template.yml` and/or  `master_template.yml`. Then generate a new aws_start.sh script for an NVFlare client in one of your client starter kits startup folder: 
+
+```
+../nvflare-cancer/make-aws-client-script.py /starter-kit-folder/startup/aws_start.sh
+```
+
+Test this aws_start.sh script intensely before you run `runtest.sh` and commit the code to your forked NVFlare repository and then create a pull request in Github. The make-aws-client-script.py uses the NVFlare internal machinery to generate shell scripts from yaml files:
+
+```python
+#! /usr/bin/env python3
+
+import os, sys
+from nvflare.lighter import tplt_utils, utils
+
+client = "AWS-T4"
+org = "Test"
+
+lighter_folder = os.path.dirname(utils.__file__)
+template = utils.load_yaml(os.path.join(lighter_folder, "impl", "master_template.yml"))
+template.update(utils.load_yaml(os.path.join(lighter_folder, "impl", "aws_template.yml")))
+tplt = tplt_utils.Template(template)
+csp = 'aws'
+if len(sys.argv) > 1:
+    dest = sys.argv[1]
+else:
+    dest = os.path.join(os.getcwd(), f"{csp}_start.sh")
+script = template[f"cloud_script_header"] + template[f"{csp}_start_sh"]
+script = utils.sh_replace(
+            script, {"type": "client", "inbound_rule": "", "cln_uid": f"uid={client}", "ORG": org}
+        )
+utils._write(
+    dest,
+    script,
+     "t",
+     exe=True,
+)
+print(f"Script written to {dest} !")
+```
+
+

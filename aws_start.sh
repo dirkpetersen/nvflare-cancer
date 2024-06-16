@@ -28,7 +28,7 @@ function prompt() {
   fi
 }
 
-get_resources_file() {
+function get_resources_file() {
   local rfile="${DIR}/../local/resources.json"  
   if [ -f "${rfile}" ]; then
     echo "${rfile}"
@@ -40,7 +40,7 @@ get_resources_file() {
   fi
 }
 
-find_ec2_gpu_instance_type() {
+function find_ec2_gpu_instance_type() {
   local gpucnt=0
   local gpumem=0
   if rfile=$(get_resources_file); then
@@ -89,19 +89,20 @@ do
   esac
   shift
 done
-TMPDIR="${TMPDIR:-/tmp}"
-LOGFILE=$(mktemp "${TMPDIR}/nvflare-aws-XXX")
 VM_NAME=nvflare_client
 SECURITY_GROUP=nvflare_client_sg_$RANDOM
 KEY_PAIR=NVFlareClientKeyPair
 KEY_FILE=$(pwd)/${KEY_PAIR}.pem
-IMAGE_OWNER="099720109477" # Owner account id=Amazon
-ARCH=x86_64
+AMI_IMAGE_OWNER="099720109477" # Owner account id=Amazon
 AMI_NAME="ubuntu-*-22.04-amd64-pro-server"
+AMI_ARCH=x86_64
+EC2_TYPE_ARM=t4g.small
+
 AMI_IMAGE=ami-01ed44191042f130f  # 22.04  20.04:ami-063da375c17d500ab 24.04:ami-0833a2b4abf788b34  (us-west-2 only)
 EC2_TYPE=t2.small
-EC2_TYPE_ARM=t4g.small
-NVIDIA_OS_PKG="nvidia-driver-550-server"
+TMPDIR="${TMPDIR:-/tmp}"
+LOGFILE=$(mktemp "${TMPDIR}/nvflare-aws-XXX")
+
 
 echo "This script requires aws (AWS CLI), sshpass, dig and jq.  Now checking if they are installed."
 
@@ -156,7 +157,7 @@ if [ $useDefault = true ]; then
     if [ ${container} = false ]; then
       read -e -i ${AMI_NAME} -p "* Cloud AMI image name, press ENTER to accept default (use amd64 or arm64): " AMI_NAME
       printf "    retrieving AMI ID for ${AMI_NAME} ... " 
-      IMAGES=$(aws ec2 describe-images --region ${REGION} --owners ${IMAGE_OWNER} --filters "Name=name,Values=*${AMI_NAME}*" --output json)
+      IMAGES=$(aws ec2 describe-images --region ${REGION} --owners ${AMI_IMAGE_OWNER} --filters "Name=name,Values=*${AMI_NAME}*" --output json)
       if [ "${#IMAGES}" -lt 30 ]; then
         echo -e "\nNo images found, starting over\n"
         continue
@@ -278,7 +279,7 @@ if [ $container = true ]; then
   report_status "$?" "launching container"
 else
   # Spawn a process to install os packages as root
-  echo "Installing os packages as root in the background, this may take a few minutes ... "
+  echo "Installing os packages as root in $VM_NAME, may take a few minutes ... "
   ssh -f -i ${KEY_FILE2} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${DEST_SITE} \
   ' NVIDIA_OS_PKG="nvidia-driver-550-server" && sudo apt update && \
   sudo DEBIAN_FRONTEND=noninteractive apt install -y python3-dev gcc && \
@@ -289,7 +290,7 @@ else
   report_status "$?" "installing os packages"
   sleep 10
   # Spawn a process to install packages as user
-  echo "Installing user space packages in the background, this may take a few minutes ... "
+  echo "Installing user space packages in $VM_NAME, may take a few minutes ... "
   ssh -f -i ${KEY_FILE2} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${DEST_SITE} \
   ' echo "export PATH=~/.local/bin:$PATH" >> ~/.bashrc && \
   export PATH=/home/ubuntu/.local/bin:$PATH && \
