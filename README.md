@@ -131,7 +131,7 @@ To get credentials to the NVFlare system login as `Lead` at `https://myproject.m
 mkdir -p ~/.nvflare/myproject 
 unzip -d ~/.nvflare/myproject ./my-lead\@domain.edu.zip
 ```
-then run `~/.nvflare/myproject/my-lead@domain.edu/startup/fl_admin.sh`, enter the email address `my-lead@domain.edu` when prompted and run the command `check_status server` 
+then run `~/.nvflare/myproject/my-lead@domain.edu/startup/fl_admin.sh`, enter the email address `my-lead@domain.edu` when prompted and run the command `check_status server` . Enter `bye` when you are done.
 
 
 ### Using the administrative console 
@@ -155,7 +155,7 @@ Done [1087332 usecs] 2024-05-05 23:28:25.033931
 
 ```
 
-You are now connected to an NVFlare system. As a next step let's run a test job using python. 
+You are now connected to an NVFlare system. Enter `bye` to leave the console. As a next step let's run a test job using python. 
 
 ### Testing a Python example 
 
@@ -250,7 +250,7 @@ Then let's copy the hellp-pt example into our working directory (NVFlare/wksps/)
 ```bash
 cd NVFlare/wksps
 cp -rf ../examples/hello-world/hello-pt ./hello-pt
-python3 -m pip install ./hello-pt/requirements.txt
+python3 -m pip install -r ./hello-pt/requirements.txt
 ```
 
 Optional: In a separate terminal you can start a jupyter lab server and continue some of this work from there. The output says somewhere towards the end: **copy and paste one of these URLs** into a browser: 
@@ -646,7 +646,7 @@ startup/start.sh
 
 ### Verify installation 
 
-Finally we want to check if all components are working together. We will use the [fl_admin.sh script](https://nvflare.readthedocs.io/en/main/real_world_fl/operation.html#operating-nvflare) for this. The script is available in each of the different FLARE Console packages. They contains different credentials for each user that downloads this package. 
+Finally we want to check if all components are working together. We will use the [fl_admin.sh script](https://nvflare.readthedocs.io/en/main/real_world_fl/operation.html#operating-nvflare) for this. The script is available in each of the different FLARE Console packages. They contain different credentials for each user that downloads this package. 
 
 To check the server status, login as `Project Admin` or `Org Admin` at https://myproject.mydomain.edu and click "Download FLARE Console" under DOWNLOADS and keep the passsword. 
 
@@ -685,7 +685,7 @@ Done [1087332 usecs] 2024-05-05 23:28:25.033931
 Done [61900 usecs] 2024-05-05 23:28:34.333857
 ```
 
-Once you have installed a new client as an `Org Admin` your users can connect to the system as `Lead`. Please see `Using NVFlare as a Lead`
+Enter `bye` to leave the console. Once you have installed a new client as an `Org Admin` your users can connect to the system as `Lead`. Please see `Using NVFlare as a Lead`
 
 
 
