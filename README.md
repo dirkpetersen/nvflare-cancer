@@ -63,7 +63,7 @@ If you want to roll out parts of the infrastruncture to AWS or Azure, you should
 
 ## Installing the right version of Python
 
-For consistency reasons we recommend installing the latest Python version supported by NVFlare (NVFlare 2.41 and Python 3.10 as of May 2024). For our AWS deployment we will use Ubuntu 22.04 (AWS image ami-03c983f9003cb9cd1, which comes with Python 3.10) instead of the default Ubuntu 20.04 (which comes with Python 3.8). To quickly install Python 3.10 in your work environment (Linux, Mac or Windows with WSL Linux) we propose the Rye Package manager by Armin Ronacher (the maker of Flask) as it very fast and can be easily removed. Below are the instructions for Linux (incl. WSL) and Mac. Do not use the Windows instructions [here](https://rye.astral.sh/) as they are not tested. Run and accept the defaults:  
+For consistency reasons we recommend installing the latest Python version supported by NVFlare (NVFlare 2.4.2 and Python 3.10 as of August 2024). For our AWS deployment we will use Ubuntu 22.04 (AWS image ami-03c983f9003cb9cd1, which comes with Python 3.10) instead of the default Ubuntu 20.04 (which comes with Python 3.8). To quickly install Python 3.10 in your work environment (Linux, Mac or Windows with WSL Linux) we propose the Rye Package manager by Armin Ronacher (the maker of Flask) as it very fast and can be easily removed. Below are the instructions for Linux (incl. WSL) and Mac. Do not use the Windows instructions [here](https://rye.astral.sh/) as they are not tested. Run and accept the defaults:  
 
 ```bash
 curl -sSf https://rye.astral.sh/get | bash
@@ -97,7 +97,7 @@ success: Initialized project in /home/pytester/.local/nvf
   Run `rye sync` to get started
 Initializing new virtualenv in /home/pytester/.local/nvf/.venv
 Python version: cpython@3.10.14
-Added nvflare>=2.4.0 as regular dependency
+Added nvflare>=2.4.2 as regular dependency
 
 $ source ~/.local/nvf/.venv/bin/activate
 (nvf) ~$
@@ -417,7 +417,7 @@ then you add the packages you need in the client to `startup/requirements.txt` :
 echo -e "torch \ntorchvision \ntensorboard" >> startup/requirements.txt
 ```
 
-now you have the option of using an improved patched version of the AWS installer which allows you to skip many of the [additional configuration steps](#additional-configuration-steps) below. To use the patched version simply run this command to download and replace the existing aws_start.sh script:
+Since version 2.4.2 there is an improved AWS installer which allows you to skip the [additional configuration steps](#additional-configuration-steps) below. To use this improved installer in older versions >= 2.30 <=2.4.1 simply run this command to download and replace the existing aws_start.sh script:
 
 ```bash
 wget https://raw.githubusercontent.com/dirkpetersen/nvflare-cancer/main/aws_start.sh -O startup/aws_start.sh
@@ -489,7 +489,7 @@ tail -f /tmp/nvflare-aws-YGR.log
 
 #### additional configuration steps
 
-If you have used the patched version of the installer you can skip these steps below and go right to [upgrade all packages](#upgrade-all-packages)
+If you have used versions >= 2.4.2 or the patched version of the installer you can skip these steps below and go right to [upgrade all packages](#upgrade-all-packages)
 
 add a cronjob to ensure that the client will restart after a reboot
 
