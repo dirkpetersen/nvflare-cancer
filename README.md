@@ -417,7 +417,7 @@ then you add the packages you need in the client to `startup/requirements.txt` :
 echo -e "torch \ntorchvision \ntensorboard" >> startup/requirements.txt
 ```
 
-Since version 2.4.2 there is an improved AWS installer which allows you to skip the [additional configuration steps](#additional-configuration-steps) below. To use this improved installer in older versions >= 2.30 <=2.4.1 simply run this command to download and replace the existing aws_start.sh script:
+Since version 2.4.2 there is an improved AWS installer which allows you to skip the [additional configuration steps](#additional-configuration-steps) below. To use this improved installer in older versions >= 2.30 <=2.4.1 simply run this command to download and replace the existing aws_start.sh script (NOTE: This step it NOT required with 2.4.2 and newer):
 
 ```bash
 wget https://raw.githubusercontent.com/dirkpetersen/nvflare-cancer/main/aws_start.sh -O startup/aws_start.sh
