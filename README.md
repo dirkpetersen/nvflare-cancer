@@ -431,7 +431,6 @@ startup/start.sh --cloud aws     # you can get more automation by using: --confi
 
 **Note**: If you receive a VPC error such as (`VPCIdNotSpecified`), you may be able to mitigate the issue by using this command: `aws ec2 create-default-vpc --region us-west-2`. You can find more details in the troubleshooting section under [No default VPC](#no-default-vpc)
 
-**Below we assume you use the patched version**
 
 Now you need to confirm or change a few default settings. After confirming your AWS region you can edit the AMI image name (which supports wildcards *), that is used to search AWS for an AMI image ID for your specific AWS region. Our default here is Ubuntu 22.04 as it has the latest supported Python version (3.10). You can also change amd64 to arm64 as ARM based instances are sometimes lower cost. 
 If you are running just a first test, it is fine to not use a GPU machine and instead pick the low cost t2.small instance.
