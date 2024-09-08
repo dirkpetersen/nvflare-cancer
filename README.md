@@ -1,5 +1,7 @@
 # NVFlare in Cancer Research 
 
+[![DOI](https://zenodo.org/badge/794854623.svg)](https://zenodo.org/doi/10.5281/zenodo.13124379)
+
 We are setting up a project among multiple cancer research organizations to explore federated learning using NVFlare. This is a pilot co-led by OHSU Knight Cancer Institute and NCI. We assume that the participants will have one of these options available:
 
 - An AWS or Azure cloud account 
