@@ -272,7 +272,7 @@ after this you can see the output of this simulation unter `./hello-pt/simulate_
 
 #### Pytorch poc mode
 
-Next we'll run `hello-pt` in [`poc` mode](https://nvflare.readthedocs.io/en/2.4.0/user_guide/nvflare_cli/poc_command.html#poc-command) which a bit closer to production than simulator as it installs all the servers and clients on a single machine, and sets up the same tcp/ip communication path as if they were on different servers. Once `poc` works, you can easily deploy to production. 
+Next we'll run `hello-pt` in [`poc` mode](https://nvflare.readthedocs.io/en/main/user_guide/nvflare_cli/poc_command.html#poc-command) which a bit closer to production than simulator as it installs all the servers and clients on a single machine, and sets up the same tcp/ip communication path as if they were on different servers. Once `poc` works, you can easily deploy to production. 
 For `poc` mode we need to have a single machine with ideally 2 GPUs. If there is an HPC cluster, let's request a machine interactivelty for one day: `srun -p gpu --gres gpu:2 -t 1-0 --pty bash`. Once this is allocated, open up a second terminal window and try to request a second shell on the same machine, assuming that machine is called `node-7`: `srun -w node-7 -p gpu -t 1-0 --pty bash`
 
 Now let's source the virtual envionment again and switch to our workspaces directory in both terminal windows.  
