@@ -8,11 +8,7 @@ We are setting up a project among multiple cancer research organizations to expl
 - An on-premises Slurm-based HPC system with GPU nodes
 - A Windows laptop with a GPU and WSL Linux installed 
 
-<<<<<<< HEAD
 The central NVFlare dashboard and server was installed by the `Project Admin`. An individual with this role is responsible for setting up the project and approving requesting sites and users. This person should be a senior IT/IPS professional from one of the collaborating sites. Individuals with this role are in charge of server security and by default have unrestricted access to the central NVFlare system which is installed in a hub-and-spoke model. The researchers in all participating institutions will use an NVFlare compute client on their HPC system, their laptop or a separate cloud account and will have no access to the central hub while the `Project Admin` of the central hub will have no access to the data processd by the clients. Please review the [terminologies and roles](https://nvflare.readthedocs.io/en/main/user_guide/security/terminologies_and_roles.html) required for a funtioning NVFlare federation.
-=======
-The central NVFlare dashboard and server was installed by the `Project Admin`, this role can be filled by the IT department or coordinating researcher of the organization that is responsible for installing the central infrastructure in a hub-and-spoke model. The researchers in this institution and other institutions will use an NVFlare compute client on their HPC system, their laptop or a separate cloud account and will have no access to the central hub while the `Project Admin` of the central hub will have no access to the data processd by the clients. Please review the [terminologies and roles](https://nvflare.readthedocs.io/en/main/user_guide/security/terminologies_and_roles.html) required for a funtioning NVFlare federation.
->>>>>>> 11b7e5af3225a3a01cccc7f6dfe82d50d65e13c0
 
 
 # Table of Contents
@@ -31,14 +27,14 @@ The central NVFlare dashboard and server was installed by the `Project Admin`, t
       - [Pytorch simulator mode](#pytorch-simulator-mode)
       - [Pytorch poc mode](#pytorch-poc-mode)
     - [Troubleshooting](#troubleshooting)
-      - [missing server dependencies](#missing-server-dependencies)
+      - [Missing server dependencies](#missing-server-dependencies)
       - [No default VPC](#no-default-vpc)
       - [SSL issue](#ssl-issue)
   - [Using NVFlare as an Org Admin](#using-nvflare-as-an-org-admin)
     - [Register client sites](#register-client-sites)
       - [Enter available GPU memory](#enter-available-gpu-memory)
     - [Install a client on AWS](#install-a-client-on-aws)
-      - [upgrade all packages](#upgrade-all-packages)
+      - [Upgrade all packages](#upgrade-all-packages)
     - [Install a client on HPC](#install-a-client-on-hpc)
     - [Install a client on your WSL Laptop](#install-a-client-on-your-wsl-laptop)
     - [Verify installation](#verify-installation)
@@ -420,12 +416,6 @@ then you add the packages you need in the client to `startup/requirements.txt` :
 echo -e "torch \ntorchvision \ntensorboard" >> startup/requirements.txt
 ```
 
-Since version 2.4.2 there is an improved AWS installer which allows you to skip the [additional configuration steps](#additional-configuration-steps) below. To use this improved installer in older versions >= 2.30 <=2.4.1 simply run this command to download and replace the existing aws_start.sh script (NOTE: This step it NOT required with 2.4.2 and newer):
-
-```bash
-wget https://raw.githubusercontent.com/dirkpetersen/nvflare-cancer/main/aws_start.sh -O startup/aws_start.sh
-```
-
 After this, run the `startup/start.sh` script or follow [these instructions to install the client on AWS](https://nvflare.readthedocs.io/en/main/real_world_fl/cloud_deployment.html#deploy-fl-client-on-aws): 
 
 ```bash
@@ -489,45 +479,10 @@ or wait until the install has finished, you can check progress in /tmp/nvflare-a
 tail -f /tmp/nvflare-aws-YGR.log
 ```
 
-<<<<<<< HEAD
-=======
-#### Additional configuration steps
-
-If you have used versions >= 2.4.2 or the patched version of the installer you can skip these steps below and go right to [upgrade all packages](#upgrade-all-packages)
-
-add a cronjob to ensure that the client will restart after a reboot
-
-```bash
-(crontab -l 2>/dev/null; echo "@reboot  /var/tmp/cloud/startup/start.sh >> /var/tmp/nvflare-client-start.log 2>&1") | crontab
-```
-
-The `df -h` command will inform you, that the client file system does not have too much free disk space.
-
-```bash
-~$ df -h
-Filesystem                      Size  Used Avail Use% Mounted on
-/dev/root                        63G   56G  7.6G  89% /
-```
-
-You might want to [increase the disk (EBS volume)](https://docs.aws.amazon.com/ebs/latest/userguide/requesting-ebs-volume-modifications.html) and then [grow the partition and file system size](https://docs.aws.amazon.com/ebs/latest/userguide/recognize-expanded-volume-linux.html) accordingly by using `growpart` and `resizefs`. 
-
-```bash
-sudo growpart /dev/xvda 1
-sudo resize2fs /dev/xvda1
-```
-
-If you have picked the plain image without NVidia drivers and software, make sure the newest GPU drivers and potential other packages are installed (this can eat up quite a bit of disk space):
-
-```bash
-sudo apt update
-sudo DEBIAN_FRONTEND=noninteractive apt install -y nvidia-driver-535-server
-```
-
->>>>>>> 11b7e5af3225a3a01cccc7f6dfe82d50d65e13c0
 In case you forgot to add some packages to requirements.txt, that may be required by other NVFlare examples, you add them an and finally you should delete your pip cache (this can save gigabytes of disk space)
 
 ```bash
-python3 -m pip install --upgrade pandas numpy
+python3 -m pip install --upgrade --no-cache-dir pandas numpy
 rm -rf ~/.cache/pip
 ```
 
