@@ -8,7 +8,7 @@ We are setting up a project among multiple cancer research organizations to expl
 - An on-premises Slurm-based HPC system with GPU nodes
 - A Windows laptop with a GPU and WSL Linux installed 
 
-The central NVFlare dashboard and server was installed by the `Project Admin`, this role can be filled by the IT department of the organization that is responsible for installing the central infrastructure in a hub-and-spoke model. The researchers in this institution and other institutions will use an NVFlare compute client on their HPC system, their laptop or a separate cloud account and will have no access to the central hub while the `Project Admin` of the central hub will have no access to the data processd by the clients. Please review the [terminologies and roles](https://nvflare.readthedocs.io/en/main/user_guide/security/terminologies_and_roles.html) required for a funtioning NVFlare federation.
+The central NVFlare dashboard and server was installed by the `Project Admin`, this role can be filled by the IT department or coordinating researcher of the organization that is responsible for installing the central infrastructure in a hub-and-spoke model. The researchers in this institution and other institutions will use an NVFlare compute client on their HPC system, their laptop or a separate cloud account and will have no access to the central hub while the `Project Admin` of the central hub will have no access to the data processd by the clients. Please review the [terminologies and roles](https://nvflare.readthedocs.io/en/main/user_guide/security/terminologies_and_roles.html) required for a funtioning NVFlare federation.
 
 
 # Table of Contents
@@ -119,7 +119,7 @@ In NVFlare, before deploying a new project, you'll likely connect to an existing
 - `Org Admin`: Can be a researcher with an AWS or Azure cloud account, or someone who can log in as a non-root user to a server with GPUs. They are responsible for installing and managing NVFlare clients. This role can also be held by cloud or research computing administrators. `Org Admins` are not allowed to submit jobs.
 - `Member`: Has read-only access to the project by default.
 
-To ensure proper separation of duties, your institution will need at least two accounts: one with the `Org Admin` role for managing infrastructure, and another with the `Lead` role for submitting jobs.
+To ensure proper separation of duties, your institution will need at least two accounts: one with the `Org Admin` role for managing infrastructure, and another with the `Lead` role for submitting jobs. Each account requires a different email.
 
 ## Using NVFlare as a Lead
 
@@ -133,7 +133,7 @@ To get credentials to the NVFlare system login as `Lead` at `https://myproject.m
 mkdir -p ~/.nvflare/myproject 
 unzip -d ~/.nvflare/myproject ./my-lead\@domain.edu.zip
 ```
-then run `~/.nvflare/myproject/my-lead@domain.edu/startup/fl_admin.sh`, enter the email address `my-lead@domain.edu` when prompted and run the command `check_status server` . Enter `bye` when you are done.
+then run `~/.nvflare/myproject/my-lead@domain.edu/startup/fl_admin.sh`, enter the email address `my-lead@domain.edu` when prompted and run the command `check_status server` .
 
 
 ### Using the administrative console 
@@ -246,7 +246,7 @@ e8d1e2c9-b47f-43fb-b95a-03551c07b93f was submitted
 
 ### Testing a Pytorch example
 
-The next step is running a Pytorch example with our infratructure. We are going to use the popular cifar10 example, which includes downloading of some image data. If you have not cloned the NVFlare repository and changed to folder NVFlare/wksps or setup `submit-nvflare-job.py` yet, please see the [Python example](#testing-a-python-example) first.
+The next step is running a Pytorch example with our infratructure. We are going to use the popular [cifar10](https://www.cs.toronto.edu/~kriz/cifar.html) example, which includes downloading of some image data. If you have not cloned the NVFlare repository and changed to folder NVFlare/wksps or setup `submit-nvflare-job.py` yet, please see the [Python example](#testing-a-python-example) first.
 Then let's copy the hellp-pt example into our working directory (NVFlare/wksps/) and  install the required packages (torch & torchvision)
 
 ```bash
@@ -273,7 +273,7 @@ after this you can see the output of this simulation unter `./hello-pt/simulate_
 
 #### Pytorch poc mode
 
-Next we'll run `hello-pt` in `poc` mode which a bit closer to production than simulator as it installs all the servers and clients on a single machine, and sets up the same tcp/ip communication path as if they were on different servers. Once `poc` works, you can easily deploy to production. 
+Next we'll run `hello-pt` in [`poc` mode](https://nvflare.readthedocs.io/en/2.4.0/user_guide/nvflare_cli/poc_command.html#poc-command) which a bit closer to production than simulator as it installs all the servers and clients on a single machine, and sets up the same tcp/ip communication path as if they were on different servers. Once `poc` works, you can easily deploy to production. 
 For `poc` mode we need to have a single machine with ideally 2 GPUs. If there is an HPC cluster, let's request a machine interactivelty for one day: `srun -p gpu --gres gpu:2 -t 1-0 --pty bash`. Once this is allocated, open up a second terminal window and try to request a second shell on the same machine, assuming that machine is called `node-7`: `srun -w node-7 -p gpu -t 1-0 --pty bash`
 
 Now let's source the virtual envionment again and switch to our workspaces directory in both terminal windows.  
@@ -345,7 +345,7 @@ options:
 
 ### Troubleshooting
 
-#### missing server dependencies
+#### Missing server dependencies
 
 If you get an `Error 113` in the server log, this might mean that a dependency on the server is missing. For example, the NVFlare hello-pt example does not only require Pytorch on the clients but also on the server. To confirm the root cause, use the FLARE console (admin CLI) to login, and execute command download_job [job-id] to get the entire workspace folder. You will find it in the transfer folder of the console. Please check the workspace/log.txt inside the job folder for more details.
 
@@ -486,7 +486,7 @@ or wait until the install has finished, you can check progress in /tmp/nvflare-a
 tail -f /tmp/nvflare-aws-YGR.log
 ```
 
-#### additional configuration steps
+#### Additional configuration steps
 
 If you have used versions >= 2.4.2 or the patched version of the installer you can skip these steps below and go right to [upgrade all packages](#upgrade-all-packages)
 
@@ -525,7 +525,7 @@ python3 -m pip install --upgrade pandas numpy
 rm -rf ~/.cache/pip
 ```
 
-#### upgrade all packages
+#### Upgrade all packages
 
 As a last step, make sure the newest packages are installed and that a reboot works
 
