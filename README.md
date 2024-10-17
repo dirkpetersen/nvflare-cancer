@@ -8,7 +8,11 @@ We are setting up a project among multiple cancer research organizations to expl
 - An on-premises Slurm-based HPC system with GPU nodes
 - A Windows laptop with a GPU and WSL Linux installed 
 
+<<<<<<< HEAD
+The central NVFlare dashboard and server was installed by the `Project Admin`. An individual with this role is responsible for setting up the project and approving requesting sites and users. This person should be a senior IT/IPS professional from one of the collaborating sites. Individuals with this role are in charge of server security and by default have unrestricted access to the central NVFlare system which is installed in a hub-and-spoke model. The researchers in all participating institutions will use an NVFlare compute client on their HPC system, their laptop or a separate cloud account and will have no access to the central hub while the `Project Admin` of the central hub will have no access to the data processd by the clients. Please review the [terminologies and roles](https://nvflare.readthedocs.io/en/main/user_guide/security/terminologies_and_roles.html) required for a funtioning NVFlare federation.
+=======
 The central NVFlare dashboard and server was installed by the `Project Admin`, this role can be filled by the IT department or coordinating researcher of the organization that is responsible for installing the central infrastructure in a hub-and-spoke model. The researchers in this institution and other institutions will use an NVFlare compute client on their HPC system, their laptop or a separate cloud account and will have no access to the central hub while the `Project Admin` of the central hub will have no access to the data processd by the clients. Please review the [terminologies and roles](https://nvflare.readthedocs.io/en/main/user_guide/security/terminologies_and_roles.html) required for a funtioning NVFlare federation.
+>>>>>>> 11b7e5af3225a3a01cccc7f6dfe82d50d65e13c0
 
 
 # Table of Contents
@@ -34,7 +38,6 @@ The central NVFlare dashboard and server was installed by the `Project Admin`, t
     - [Register client sites](#register-client-sites)
       - [Enter available GPU memory](#enter-available-gpu-memory)
     - [Install a client on AWS](#install-a-client-on-aws)
-      - [additional configuration steps](#additional-configuration-steps)
       - [upgrade all packages](#upgrade-all-packages)
     - [Install a client on HPC](#install-a-client-on-hpc)
     - [Install a client on your WSL Laptop](#install-a-client-on-your-wsl-laptop)
@@ -63,27 +66,27 @@ If you want to roll out parts of the infrastruncture to AWS or Azure, you should
 
 ## Installing the right version of Python
 
-For consistency reasons we recommend installing the latest Python version supported by NVFlare (NVFlare 2.4.2 and Python 3.10 as of August 2024). For our AWS deployment we will use Ubuntu 22.04 (AWS image ami-03c983f9003cb9cd1, which comes with Python 3.10) instead of the default Ubuntu 20.04 (which comes with Python 3.8). To quickly install Python 3.10 in your work environment (Linux, Mac or Windows with WSL Linux) we propose the Rye Package manager by Armin Ronacher (the maker of Flask) as it very fast and can be easily removed. Below are the instructions for Linux (incl. WSL) and Mac. Do not use the Windows instructions [here](https://rye.astral.sh/) as they are not tested. Run and accept the defaults:  
+For consistency reasons we recommend installing the latest Python version supported by NVFlare (NVFlare 2.5.1 and Python 3.12 as of October 2024). For our AWS deployment we will use Ubuntu 24.04, which comes with Python 3.12. To quickly install Python 3.12 in your work environment (Linux, Mac or Windows with WSL Linux) we propose the Rye Package manager by Armin Ronacher (the maker of Flask) as it very fast and can be easily removed. Below are the instructions for Linux (incl. WSL) and Mac. Do not use the Windows instructions [here](https://rye.astral.sh/) as they are not tested. Run and accept the defaults:  
 
 ```bash
 curl -sSf https://rye.astral.sh/get | bash
 ```
 
-Rye quickly installs Python 3.10 in a reproducible way and makes it the default Python on your system (it will edit file ~/.python-version)
+Rye quickly installs Python 3.12 in a reproducible way and makes it the default Python on your system (it will edit file ~/.python-version)
 
 ```
 . ~/.rye/env
-rye fetch 3.10
-rye pin 3.10
+rye fetch 3.12
+rye pin 3.12
 ```
 
 The Rye installer will put `. ~/.rye/env` into ~/.profile to ensure that this Python version is ready at the next login. If you have an older HPC system it may not use the file ~/.profile but ~/.bash_profile instead. just run `echo '. ~/.rye/env' >> ~/.bash_profile` in that case. 
 
-A quick test should show, that the default python is latest Python 3.10
+A quick test should show, that the default python is latest Python 3.12
 
 ```bash
 $ python --version
-Python 3.10.14
+Python 3.12.3
 ```
 
 ## Installing NVFlare in an isolated venv
@@ -96,8 +99,8 @@ $ rye init ~/.local/nvf && cd ~/.local/nvf && rye add nvflare jupyterlab pip && 
 success: Initialized project in /home/pytester/.local/nvf
   Run `rye sync` to get started
 Initializing new virtualenv in /home/pytester/.local/nvf/.venv
-Python version: cpython@3.10.14
-Added nvflare>=2.4.2 as regular dependency
+Python version: cpython@3.12.5
+Added nvflare>=2.5.1 as regular dependency
 
 $ source ~/.local/nvf/.venv/bin/activate
 (nvf) ~$
@@ -432,7 +435,7 @@ startup/start.sh --cloud aws     # you can get more automation by using: --confi
 **Note**: If you receive a VPC error such as (`VPCIdNotSpecified`), you may be able to mitigate the issue by using this command: `aws ec2 create-default-vpc --region us-west-2`. You can find more details in the troubleshooting section under [No default VPC](#no-default-vpc)
 
 
-Now you need to confirm or change a few default settings. After confirming your AWS region you can edit the AMI image name (which supports wildcards *), that is used to search AWS for an AMI image ID for your specific AWS region. Our default here is Ubuntu 22.04 as it has the latest supported Python version (3.10). You can also change amd64 to arm64 as ARM based instances are sometimes lower cost. 
+Now you need to confirm or change a few default settings. After confirming your AWS region you can edit the AMI image name (which supports wildcards *), that is used to search AWS for an AMI image ID for your specific AWS region. Our default here is Ubuntu 24.04 as it has the latest supported Python version (3.12). You can also change amd64 to arm64 as ARM based instances are sometimes lower cost. 
 If you are running just a first test, it is fine to not use a GPU machine and instead pick the low cost t2.small instance.
 
 ```
@@ -441,11 +444,11 @@ Note: run this command first for a different AWS profile:
 
 * Cloud EC2 region, press ENTER to accept default: us-west-2
 * Cloud AMI image name, press ENTER to accept default (use amd64 or arm64): ubuntu-*-22.04-arm64-pro-server
-    retrieving AMI ID for ubuntu-*-22.04-arm64-pro-server ... ami-0d0b0cfbf4ce38093 found
+    retrieving AMI ID for ubuntu-*-24.04-arm64-pro-server ...  ami-04dd23e62ed049936 found
     finding smallest instance type with 1 GPUs and 15360 MiB VRAM ... g5g.xlarge found
 * Cloud EC2 type, press ENTER to accept default: g5g.xlarge
-* Cloud AMI image id, press ENTER to accept default: ami-0d0b0cfbf4ce38093
-region = us-west-2, EC2 type = g5g.xlarge, ami image = ami-0d0b0cfbf4ce38093 , OK? (Y/n)
+* Cloud AMI image id, press ENTER to accept default: ami-04dd23e62ed049936
+region = us-west-2, EC2 type = g5g.xlarge, ami image = ami-04dd23e62ed049936 , OK? (Y/n)
 If the client requires additional Python packages, please add them to /home/dp/NVFlare/dirk/Test/AWS-T4.X/startup/requirements.txt !
 Press ENTER when it's done or no additional dependencies.
 ```
@@ -486,6 +489,8 @@ or wait until the install has finished, you can check progress in /tmp/nvflare-a
 tail -f /tmp/nvflare-aws-YGR.log
 ```
 
+<<<<<<< HEAD
+=======
 #### Additional configuration steps
 
 If you have used versions >= 2.4.2 or the patched version of the installer you can skip these steps below and go right to [upgrade all packages](#upgrade-all-packages)
@@ -518,6 +523,7 @@ sudo apt update
 sudo DEBIAN_FRONTEND=noninteractive apt install -y nvidia-driver-535-server
 ```
 
+>>>>>>> 11b7e5af3225a3a01cccc7f6dfe82d50d65e13c0
 In case you forgot to add some packages to requirements.txt, that may be required by other NVFlare examples, you add them an and finally you should delete your pip cache (this can save gigabytes of disk space)
 
 ```bash
@@ -902,13 +908,13 @@ follow [these instructions to install the server on AWS](https://nvflare.readthe
 startup/start.sh --cloud aws     # this is only needed for full automation: --config my_config.txt
 ```
 
-then we are prompted, and instead the default AMI (Ubuntu 20.04) we pick the slightly newer 22.04 (ami-03c983f9003cb9cd1)
+then we are prompted, and instead the default AMI (Ubuntu 20.04) we pick the newer 24.04 ( ami-04dd23e62ed049936)
 
 ```
-Cloud AMI image, press ENTER to accept default ami-04bad3c587fe60d89: ami-03c983f9003cb9cd1
+Cloud AMI image, press ENTER to accept default ami-04bad3c587fe60d89:  ami-04dd23e62ed049936
 Cloud EC2 type, press ENTER to accept default t2.small:
 Cloud EC2 region, press ENTER to accept default us-west-2:
-region = us-west-2, ami image = ami-03c983f9003cb9cd1, EC2 type = t2.small, OK? (Y/n) Y
+region = us-west-2, ami image = ami-04dd23e62ed049936, EC2 type = t2.small, OK? (Y/n) Y
 If the server requires additional dependencies, please copy the requirements.txt to myproject-server.mydomain.edu/startup/.
 Press ENTER when it's done or no additional dependencies.
 ```
@@ -927,24 +933,24 @@ aws ec2 associate-address --instance-id YOUR_INSTANCE_ID --allocation-id YOUR_AL
 test your connection with 
 
 ```bash
-ssh -i NVFlareServerKeyPair.pem ubuntu@myproject-server.mydomain.edu
+ssh -i NVFlareserverKeyPair.pem ubuntu@myproject-server.mydomain.edu
 ```
 
-add a cronjob to ensure that the server will restart after a reboot
 
-```bash
-(crontab -l 2>/dev/null; echo "@reboot  /var/tmp/cloud/startup/start.sh >> /var/tmp/nvflare-server-start.log 2>&1") | crontab
+Then make sure you install some packages that may be required by NVFlare examples such as 'hello-pt' and finally delete your pip cache (this can save gigabytes of disk space)
+
+```
+python3 -m pip install --upgrade --no-cache-dir torch pandas
+rm -rf ~/.cache/pip
 ```
 
-Now you should [increase the partition and file system size](https://docs.aws.amazon.com/ebs/latest/userguide/recognize-expanded-volume-linux.html) of your instance to the disk size you set before (using growpart and resizefs). Then make sure you install some packages that may be required by NVFlare examples such as 'hello-pt' and finally delete your pip cache (this can save gigabytes of disk space)
-
+If there is not enough disk space, you should [increase the partition and file system size](https://docs.aws.amazon.com/ebs/latest/userguide/recognize-expanded-volume-linux.html) of your instance to the disk size you set before (using growpart and resizefs). After that you can try installing python packages again
 
 ```
 sudo growpart /dev/xvda 1
 sudo resize2fs /dev/xvda1
-python3 -m pip install --upgrade torch pandas
-rm -rf ~/.cache/pip
 ```
+
 
 Finally make sure the newest packages are installed and that a reboot works
 
@@ -961,7 +967,7 @@ please see [Using NVFlare as an Org Admin](#using-nvflare-as-an-org-admin)
 # Contributing code to NVFlare 
 
 If you would like to make a code contribution to NVFlare, please check the [contributor docs](https://nvflare.readthedocs.io/en/main/contributing.html) first. 
-In our case, we have made modificaitons to the cloud deployment scripts and constributed some changes back. Please take these steps after [creating a Fork](https://github.com/NVIDIA/NVFlare/fork) of NVFlare: 
+In our case, we have made modifications to the cloud deployment scripts and constributed some changes back. Please take these steps after [creating a Fork](https://github.com/NVIDIA/NVFlare/fork) of NVFlare: 
 
 ```
 git clone git@github.com:your-organization/NVFlare.git
