@@ -26,6 +26,8 @@ The central NVFlare dashboard and server was installed by the `Project Admin`. A
     - [Testing a Pytorch example](#testing-a-pytorch-example)
       - [Pytorch simulator mode](#pytorch-simulator-mode)
       - [Pytorch poc mode](#pytorch-poc-mode)
+    - [Client API with external process (Slurm use case)](#client-api-with-external-process-slurm-use-case)
+      - [Connecting to HPC with an older version of NVFlare](#connecting-to-hpc-with-an-older-version-of-nvflare)
     - [Troubleshooting](#troubleshooting)
       - [Missing server dependencies](#missing-server-dependencies)
       - [No default VPC](#no-default-vpc)
@@ -342,6 +344,76 @@ options:
   --project PROJECT    A folder under ~/.nvflare (default: myproject)
 ```
 
+### Client API with external process (Slurm use case)
+
+NVFlare supports the use of [external processes](https://github.com/NVIDIA/NVFlare/blob/main/examples/hello-world/ml-to-fl/README.md#advanced-user-options-client-api-with-different-implementations) which enables us to spawn of a job to an hpc cluster. Please connect to the login node of your HPC cluster and run a simulator job :
+
+- You can write your client side training script following examples https://github.com/NVIDIA/NVFlare/tree/main/examples/hello-world/ml-to-fl
+
+- Then you just use this job template that used FilePipe: https://github.com/NVIDIA/NVFlare/tree/main/job_templates/sag_np and replace executions of `python3` with `srun python3`
+
+- You need to use FilePipe instead of the default CellPipe because CellPipe cannot work in POC mode as it listens on localhost and the Slurm node would not know to which host to talk to.
+
+Let's start this step by step in POC mode. 
+
+- First you connect to the login node and switch to the checked out NVFlare git repository and create a `myjobs` folder (assuming you cloned the NVFlare repos in the root of your home directory)
+
+```
+cd ~/NVFlare && mkdir myjobs
+```
+
+as sag_np template uses FilePipe, I ran this in the cloned NVFlare git repos: 
+
+```
+dp@box:~/NVFlare$ nvflare job create -w sag_np -j ./myjobs/slurm_job_fp -sd examples/hello-world/ml-to-fl/np/src/
+```
+
+in `./myjobs/slurm_job_fp/app/config/config_fed_client.conf` you replace `app_script = "cifar10.py"` with `app_script = "train_full.py"` and `script = " python3 -u custom....` with `script = "srun python3 -u custom....`
+
+Slurm uses `sbatch` or `srun` to submit jobs. Here you use  `srun python3 -u custom/{app_script} {app_config}` because unlike `sbatch`, `srun` executes synchronous and simply waits until the python script for that specific job has finished.  Of course you can run hundreds of srun sessions in parallel. 
+
+You can also add a few debugging statements to `./myjobs/slurm_job_fp/app/custom/train_full.py` 
+
+When you try POC mode, you need to consider that the POC default workdir is /tmp/nvflare/poc and change it to a workdir in the shared file system (in this case `~/temp/nv-work` in your home directory that is mounted on all compute nodes) so the compute node that is executing train_full.py can also reach the work space. In a separate 2nd terminal on the Slurm login node you run: 
+
+```
+export NVFLARE_POC_WORKSPACE=~/temp/nv-work
+nvflare poc prepare -n 2
+nvflare poc start
+```
+
+in a 3rd terminal on the same login node you ask `squeue` to show all your jobs and refresh every second.
+
+```
+squeue --me -i 1
+```
+
+back to your first terminal you run : 
+
+```
+dp@box:~/NVFlare$ nvflare job submit -j ./myjobs/slurm_job_fp
+trying to connect to the server
+job: '39be4acb-80b3-4e9b-b0e4-31f206578092 was submitted
+```
+
+In the squeue terminal you will see 2 jobs are starting and seem to finish normally. Here is the end of the output of the POC process :
+
+```
+2024-10-31 21:59:53,862 - ClientRunner - INFO - [identity=site-1, run=39be4acb-80b3-4e9b-b0e4-31f206578092]: Client is stopping ...
+2024-10-31 21:59:53,862 - ClientRunner - INFO - [identity=site-2, run=39be4acb-80b3-4e9b-b0e4-31f206578092]: Client is stopping ...
+2024-10-31 21:59:55,189 - ReliableMessage - INFO - shutdown reliable message monitor
+2024-10-31 21:59:55,190 - ReliableMessage - INFO - shutdown reliable message monitor
+2024-10-31 21:59:55,364 - MPM - WARNING - #### MPM: still running thread ClientAPILauncherExecutor_0
+2024-10-31 21:59:55,364 - MPM - WARNING - #### MPM: still running thread ClientAPILauncherExecutor_0
+2024-10-31 21:59:55,364 - MPM - INFO - MPM: Good Bye!
+2024-10-31 21:59:55,364 - MPM - INFO - MPM: Good Bye!
+```
+
+
+#### Connecting to HPC with an older version of NVFlare
+
+If you are using an older version of NVFlare need to ask the Org Admin of your organization [Install a client on an HPC node](#install-a-client-on-hpc). This has the disadvantage that the HPC node needs to be reserved at all times ot be able to accept jobs, blocking GPU hardware even during idle times. However it can be a useful temporary solution as your researchers are transitioning to the lastest version of NVFlare
+
 ### Troubleshooting
 
 #### Missing server dependencies
@@ -498,6 +570,8 @@ sudo reboot
 
 ### Install a client on HPC 
 
+Note: *This approach requires you to allocate a GPU node for a long time. Running [nvflare on the login node and then submitting jobs to the cluster](#client-api-with-external-process-slurm-use-case) is likelty much more efficient*
+
 Login as `Org Admin` at `https://myproject.mydomain.edu` and confirm that you have added a client site, that you perhaps call HPC-A40 based on the GPUs you use. Again, make sure you enter the [correct amount of GPU memory](#enter-available-gpu-memory). After this client site is approved by the `Project Admin` you can go to DOWNLOADS -> Client Sites -> HPC-A40 click "Download Startup Kit" and keep the password (copy it somewhere)
 
 Move the file to the project folder in your file system, unzip it and paste the password when prompted
@@ -505,6 +579,14 @@ Move the file to the project folder in your file system, unzip it and paste the 
 ```bash
 unzip HPC-A40.zip 
 cd HPC-A40
+```
+
+After changing to the HPC-A40 directory you should see 2 folders and a readme file
+
+```
+local
+readme.txt
+startup
 ```
 
 Most modern HPC systems will use the Slurm workload manager. On such a system you don't require the overhead of a container or even a virtual machine that needs to be installed first. You can simply submit a batch job that will launch the NVFlare client. In this case we assume that the HPC admin has made A40 GPUs available as general resource (GRES) named gpu:a40 (`--gres gpu:a40`) and we want a single GPU (`--gres gpu:a40:1`). If you don't care about the specific GPU model, you simply request `--gres gpu:1`. (With newer versions of Slurm you can also use `--gpus a40:1` or `--gpus 1`) Let's create a little shell script called `nvflare-HPC-A40.sub` that functions as Slurm submission script:
