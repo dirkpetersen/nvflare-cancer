@@ -346,7 +346,7 @@ options:
 
 ### Client API with external process (Slurm use case)
 
-NVFlare supports the use of [external processes](https://github.com/NVIDIA/NVFlare/blob/main/examples/hello-world/ml-to-fl/README.md#advanced-user-options-client-api-with-different-implementations) which enables us to spawn of a job to an hpc cluster. Please connect to the login node of your HPC cluster and run a simulator job :
+NVFlare supports the use of [external processes](https://github.com/NVIDIA/NVFlare/blob/main/examples/hello-world/ml-to-fl/README.md#advanced-user-options-client-api-with-different-implementations) which enables us to spawn of a job to an hpc cluster. Please connect to the login node of your HPC cluster and run a POC job :
 
 - You can write your client side training script following examples https://github.com/NVIDIA/NVFlare/tree/main/examples/hello-world/ml-to-fl
 
